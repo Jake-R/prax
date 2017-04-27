@@ -1,6 +1,27 @@
 # pyrax
 pyrax is a data conversion utility a la radare2's rax. It allows the user to enter a snippet of data in one format and see it in a number of other formats (hex, decimal, binary, raw, Base 64, etc.) and optionally to apply operators to the raw data (swap endianness currently)
 
+# Examples
+~~~~
+>> ./pyrax.py 0xdeadbeef
+0xdeadbeef 3735928559 Þ­¾ï 3q2+7w==
+
+
+
+>> ./pyrax.py -r 0xdeadbeef 
+Þ­¾ï
+
+>> ./pyrax.py ABCD 0xcafe 12345678
+0x41424344 1094861636 ABCD QUJDRA==
+0xcafe 51966 Êþ yv4=
+0xbc614e 12345678 ¼aN vGFO
+
+\# When specifying output format then args are joined
+>> ./pyrax.py -r ABCD 0x45464748 IJKL
+ABCDEFGHIJKL
+~~~~
+
+# Usage
 ~~~~
 >> ./pyrax.py -h
 usage: pyrax.py [-h] [-x] [-X] [-d] [-D] [-r] [-R] [-s] [-S] [-e]
