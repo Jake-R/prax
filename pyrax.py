@@ -44,14 +44,30 @@ class Operator(object):
 class SwapEndianness(Operator):
     NAME = 'swap endianness'
     FLAG = 'e'
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument("-{}".format(cls.FLAG), action='store_true', default=False,
+                            help='Apply "{}" operator to data'.format(cls.NAME))
+        return parser
+
     def operate(input: int) -> int:
         to_byte = lambda x: x.to_bytes(math.ceil(math.log(x, 16) / 2), 'big')
         return int.from_bytes(to_byte(input), 'little')
 
 
 class Type(object):
-    Name = None
+    NAME = None
     FLAG = None
+    FORMATTERS = []
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument("-{}".format(cls.FLAG.lower()), action='store_true', default=False,
+                            help="output in {}".format(cls.NAME))
+        parser.add_argument("-{}".format(cls.FLAG.upper()), action='store_true', default=False,
+                            help="force input as {}".format(cls.NAME))
+        return parser
+
     @classmethod
     def strip_format(cls, input):
         return input
@@ -59,8 +75,8 @@ class Type(object):
 
 class base_generic(Type):
     BASE = None
-    FORMATTERS = []
     ALPHABET = string.digits + string.ascii_lowercase
+
     @classmethod
     def strip_format(cls, input: str) -> str:
         for fmt in cls.FORMATTERS:
@@ -81,7 +97,7 @@ class base_generic(Type):
 
     @classmethod
     def convert(cls, *args) -> str:
-        val="".join([cls._from_int(x) for x in args])
+        val="".join([cls._to_str(x) for x in args])
         for fmt in reversed(cls.FORMATTERS):
             val = fmt.add(val)
         return val
@@ -95,14 +111,14 @@ class base_generic(Type):
 
     # http://interactivepython.org/courselib/static/pythonds/Recursion/pythondsConvertinganIntegertoaStringinAnyBase.html
     @classmethod
-    def _from_int(cls, input: int) -> str:
+    def _to_str(cls, input: int) -> str:
         if cls.BASE > len(cls.ALPHABET):
             print("too large of a base :(")
             return None
         if input < cls.BASE:
             return cls.ALPHABET[input]
         else:
-            return cls._from_int(input//cls.BASE) + cls.ALPHABET[input % cls.BASE]
+            return cls._to_str(input // cls.BASE) + cls.ALPHABET[input % cls.BASE]
 
 
 class base_hex(base_generic):
@@ -127,21 +143,21 @@ class base_binary(base_generic):
     FLAG = 'b'
     FORMATTERS = [StartsWith('0b')]
 
-class base_64(object):
+class base_64(Type):
     NAME="Base64"
     FLAG = 's'
     @classmethod
     def parse(cls, input, force=False):
         try:
             return Ascii.parse(base64.b64decode(input))
-        except TypeError:
-            raise
+        except:
+            return None
     @classmethod
     def convert(cls, *input):
         val = "".join([Ascii.convert(x) for x in input])
-        return base64.b64encode(val)
+        return base64.b64encode(val.encode('latin-1')).decode('latin-1')
 
-class Ascii(object):
+class Ascii(Type):
     NAME = 'ascii'
     FLAG = 'r'
     @classmethod
@@ -150,12 +166,14 @@ class Ascii(object):
 
     @classmethod
     def parse(cls, input: str, force=False) -> int:
-        return base_hex.parse(binascii.hexlify(input.encode('latin1')).decode('latin1'), force = True)
+        if type(input) is str:
+            input = input.encode('latin-1')
+        return base_hex.parse(binascii.hexlify(input).decode('latin1'), force = True)
 
     @classmethod
     def convert(cls, *input) -> str:
         # convert int -> even numbered hex -> bytes -> raw
-        i = "".join([EvenNum().add(base_hex._from_int(x)) for x in input])
+        i = "".join([EvenNum().add(base_hex._to_str(x)) for x in input])
         return binascii.unhexlify(i).decode("latin1")
 
 def main():
@@ -164,14 +182,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("input", nargs='+')
-    for x in classes:
-        parser.add_argument("-{}".format(x.FLAG.lower()), action='store_true', default=False,
-                            help="output in {}".format(x.NAME))
-        parser.add_argument("-{}".format(x.FLAG.upper()), action='store_true', default=False,
-                            help="force input as {}".format(x.NAME))
-    for x in operators:
-        parser.add_argument("-{}".format(x.FLAG), action='store_true', default=False,
-                            help='Apply "{}" operator to data')
+    for x in classes + operators:
+        parser = x.add_args(parser)
     args = parser.parse_args()
     args_dict = vars(args)
     input = None
