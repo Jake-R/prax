@@ -14,7 +14,7 @@ pyrax is a data conversion utility a la radare2's rax. It allows the user to ent
 0xcafe 51966 Êþ yv4=
 0xbc614e 12345678 ¼aN vGFO
 
-\# When specifying output format then args are joined
+# When specifying output format the args are concatenated
 >> ./pyrax.py -r ABCD 0x45464748 IJKL
 ABCDEFGHIJKL
 ~~~~
