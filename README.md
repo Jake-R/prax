@@ -17,12 +17,12 @@ pyrax has two primary modes. The first is when no output format is specified. py
 ~~~~
 
 The second mode is when an output format is specified. The argument is parsed using the following rules:
-Rule|Explanation|Example
+Rule | Explanation | Example
 --- | --- | ---
-e1+e2|concatenate e1 with e2|'>>pyrax -r ABCD+0x45464748 -> ABCDEFGH'
-e1*e2|repeat e1 e2 times|'>>pyrax -x 0x41*6 -> 0x414141414141'
-e1@e2|repeat e1 e2 times, incrementing by 1|'>>pyrax -r 0x30@10 -> 0123456789'
-(e1)|evaluate as subexpression|'>>pyrax -r '(A*4)@5' -> AAAAAAABAAACAAADAAAE'
+e1+e2 | concatenate e1 with e2 | '>>pyrax -r ABCD+0x45464748 -> ABCDEFGH'
+e1\*e2 |repeat e1 e2 times | '>>pyrax -x 0x41*6 -> 0x414141414141'
+e1@e2 | repeat e1 e2 times, incrementing by 1 | '>>pyrax -r 0x30@10 -> 0123456789'
+(e1) | evaluate as subexpression | '>>pyrax -r '(A*4)@5' -> AAAAAAABAAACAAADAAAE'
 
 # Usage
 ~~~~
