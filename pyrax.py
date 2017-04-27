@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import sys
 import argparse
@@ -7,6 +7,9 @@ import string
 import math
 import functools
 import base64
+from parser import parser as raxParser
+import semantics
+
 
 def compose(*functions):
     return functools.reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
@@ -72,6 +75,22 @@ class Type(object):
     def strip_format(cls, input):
         return input
 
+    @classmethod
+    def add_format(cls, input):
+        return input
+
+    @classmethod
+    def convert(cls, input):
+        return None
+
+    @classmethod
+    def parse(cls, input):
+        return None
+
+    @classmethod
+    def _to_int(cls, input):
+        return cls.parse(input)
+
 
 class base_generic(Type):
     BASE = None
@@ -85,6 +104,12 @@ class base_generic(Type):
             else:
                 return None
         return input
+    @classmethod
+    def add_format(cls, input):
+        for fmt in reversed(cls.FORMATTERS):
+            input = fmt.add(input)
+        return input
+
 
     @classmethod
     def parse(cls, input: str, force=False) -> int:
@@ -98,15 +123,13 @@ class base_generic(Type):
     @classmethod
     def convert(cls, *args) -> str:
         val="".join([cls._to_str(x) for x in args])
-        for fmt in reversed(cls.FORMATTERS):
-            val = fmt.add(val)
-        return val
+        return cls.add_format(val)
 
     @classmethod
     def _to_int(cls, input):
             try:
                 return int(input, cls.BASE)
-            except ValueError:
+            except:
                 return None
 
     # http://interactivepython.org/courselib/static/pythonds/Recursion/pythondsConvertinganIntegertoaStringinAnyBase.html
@@ -146,6 +169,7 @@ class base_binary(base_generic):
 class base_64(Type):
     NAME="Base64"
     FLAG = 's'
+
     @classmethod
     def parse(cls, input, force=False):
         try:
@@ -156,6 +180,9 @@ class base_64(Type):
     def convert(cls, *input):
         val = "".join([Ascii.convert(x) for x in input])
         return base64.b64encode(val.encode('latin-1')).decode('latin-1')
+    @classmethod
+    def _to_str(cls, *input):
+        return cls.convert(*input)
 
 class Ascii(Type):
     NAME = 'ascii'
@@ -163,6 +190,8 @@ class Ascii(Type):
     @classmethod
     def strip_format(cls, input: str) -> str:
         return input
+
+
 
     @classmethod
     def parse(cls, input: str, force=False) -> int:
@@ -176,9 +205,18 @@ class Ascii(Type):
         i = "".join([EvenNum().add(base_hex._to_str(x)) for x in input])
         return binascii.unhexlify(i).decode("latin1")
 
+    @classmethod
+    def _to_str(cls, *input):
+        return cls.convert(*input)
+
+classes = [base_hex, base_decimal, Ascii, base_64]
+operators = [SwapEndianness]
+
+def parse(input):
+   return [y for y in [x.parse(input) for x in classes] if y is not None][0]
+
 def main():
-    classes = [base_hex, base_decimal, Ascii, base_64]
-    operators = [SwapEndianness]
+
 
     parser = argparse.ArgumentParser()
     parser.add_argument("input", nargs='+')
@@ -193,25 +231,26 @@ def main():
             output = x
         if args_dict[x.FLAG.upper()]:
             input = x
-    values = []
-
-    for in_value in args.input:
-        if input is None:
-            val = [y for y in [x.parse(in_value) for x in classes] if y is not None][0]
-            values.append(val)
-        else:
-            values.append(input.parse(in_value, force=True))
     funcs = [x.operate for x in operators if args_dict[x.FLAG]]
+    ops = []
     if funcs is not None:
         ops = compose(*funcs)
-        values = [ops(val) for val in values]
-
+    values = []
     if output is None:
+        for in_value in args.input:
+            if input is None:
+                val = [y for y in [x.parse(in_value) for x in classes] if y is not None][0]
+                values.append(val)
+            else:
+                values.append(input.parse(in_value, force=True))
+
+            values = [ops(val) for val in values]
+
         for val in values:
             print(" ".join([x.convert(val) for x in classes if x is not input]))
     else:
-        print(output.convert(*values), end="")
-
+        p = raxParser.pyraxParser(semantics=semantics.pyraxSemantics(output))
+        print(output.add_format("".join([p.parse(x) for x in args.input])))
 
 if __name__ == "__main__":
     main()
