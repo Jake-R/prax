@@ -9,6 +9,9 @@ pyrax is a data conversion utility a la radare2's rax. It allows the user to ent
 >> ./pyrax.py -r 0xdeadbeef 
 Þ­¾ï
 
+>> ./pyrax.py -e 0xdeadbeef
+0xefbeadde 4022250974 ï¾­Þ 776t3g==
+
 >> ./pyrax.py ABCD 0xcafe 12345678
 0x41424344 1094861636 ABCD QUJDRA==
 0xcafe 51966 Êþ yv4=
