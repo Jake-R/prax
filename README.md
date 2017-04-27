@@ -6,8 +6,6 @@ pyrax is a data conversion utility a la radare2's rax. It allows the user to ent
 >> ./pyrax.py 0xdeadbeef
 0xdeadbeef 3735928559 Þ­¾ï 3q2+7w==
 
-
-
 >> ./pyrax.py -r 0xdeadbeef 
 Þ­¾ï
 
