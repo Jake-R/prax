@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
+from future.builtins import (str, super, int, object)
 
 import argparse
 import base64
@@ -7,8 +8,7 @@ import binascii
 import functools
 import math
 import string
-
-from future.builtins import (str, super, int, object)
+import os
 from grako.exceptions import FailedParse
 
 
@@ -285,10 +285,12 @@ def parse_to_int(string_):
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("input", nargs='+')
+    arg_parser.add_argument("input", nargs='+', help="literal or expression to parse")
+    arg_parser.add_argument("-n", action='store_true', help="don't print newline")
     for x in target_types + operators:
         arg_parser = x.add_args(arg_parser)
     args = arg_parser.parse_args()
+    print_end = "" if args.n else os.linesep
     args_dict = vars(args)
 
     input_type = None
@@ -316,10 +318,10 @@ def main():
             except FailedParse:
                 print("Invalid syntax")
                 exit(1)
-        print(" ".join(values))
+        print(" ".join(values), end=print_end)
     else:
         p = parser.PraxParser(semantics=semantics.PraxSemantics(output_type, input_type, operators=ops))
-        print(output_type.add_format(p.parse(argument)))
+        print(output_type.add_format(p.parse(argument)), end=print_end)
 
 
 if __name__ == "__main__":

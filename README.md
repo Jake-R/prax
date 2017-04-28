@@ -14,10 +14,12 @@ When no output format is specified, Prax allows you to see all the permutations 
 0x41424344 1094861636 ABCD QUJDRA==
 ~~~~
 
-When an output format is specified, then that format will be printed without a trailing newline. This makes it easy to use prax as input to other programs.
+When an output format is specified, then only that format will be printed. using the `-n` flag prints the output without a trailing newline which makes it easy to use prax as input to other programs.
 ~~~~
 >> prax -r 0x41424344
 ABCD
+>> prax -re 0x41424344
+ABCD>>
 ~~~~
 Prax has a built-in parser to evaluate multiple literals according to the following rules:
 
@@ -30,16 +32,17 @@ e1@e2 | repeat e1 e2 times, incrementing by 1 | `>>prax -r 0x30@10 -> 0123456789
 
 # Usage
 ~~~~
->> prax -h
-usage: prax [-h] [-x] [-X] [-d] [-D] [-r] [-R] [-s] [-S] [-b] [-B] [-o]
-               [-O] [-e]
+>> prax  -h
+usage: prax.py [-h] [-n] [-x] [-X] [-d] [-D] [-r] [-R] [-s] [-S] [-b] [-B]
+               [-o] [-O] [-e]
                input [input ...]
 
 positional arguments:
-  input
+  input       literal or expression to parse
 
 optional arguments:
   -h, --help  show this help message and exit
+  -n          don't print newline
   -x          output in hex
   -X          force input as hex
   -d          output in decimal
