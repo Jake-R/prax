@@ -48,6 +48,7 @@ class Operator(object):
     NAME = None
     FLAG = None
 
+    @staticmethod
     def operate(self, number):
         return number
 
@@ -62,10 +63,12 @@ class SwapEndianness(Operator):
                             help='Apply "{}" operator to data'.format(cls.NAME))
         return parser
 
+    @classmethod
     def operate(self, number: int) -> int:
-        def to_byte(x): x.to_bytes(math.ceil(math.log(x, 16) / 2), 'big')
-
-        return int.from_bytes(to_byte(number), 'little')
+        log = math.log(number, 16)
+        ceil = math.ceil(log / 2)
+        bytes_ = number.to_bytes(ceil, 'big')
+        return int.from_bytes(bytes_, 'little')
 
 
 class Type(object):
@@ -245,8 +248,10 @@ def main():
             input_type = x
 
     funcs = [x.operate for x in operators if args_dict[x.FLAG]]
-    ops = []
-    if funcs is not None:
+    ops = None
+    if len(funcs) == 1:
+        ops = funcs[0]
+    elif funcs is not None:
         ops = compose(*funcs)
 
     argument = " ".join(args.input)
