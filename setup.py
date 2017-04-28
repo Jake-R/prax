@@ -9,10 +9,10 @@ setup(
     author='robie',
     author_email='',
     description='',
-    entry_points = {
-        'console_scripts' : [
+    entry_points={
+        'console_scripts': [
             'pyrax = pyrax:main',
             'rax = pyrax:main'
-    ]
-}
+        ]
+    }
 )

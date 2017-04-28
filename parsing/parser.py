@@ -21,7 +21,7 @@ from grako.util import re, RE_FLAGS, generic_main  # noqa
 KEYWORDS = {}
 
 
-class pyraxBuffer(Buffer):
+class PyraxBuffer(Buffer):
     def __init__(
         self,
         text,
@@ -33,7 +33,7 @@ class pyraxBuffer(Buffer):
         namechars='',
         **kwargs
     ):
-        super(pyraxBuffer, self).__init__(
+        super(PyraxBuffer, self).__init__(
             text,
             whitespace=whitespace,
             nameguard=nameguard,
@@ -45,7 +45,7 @@ class pyraxBuffer(Buffer):
         )
 
 
-class pyraxParser(Parser):
+class PyraxParser(Parser):
     def __init__(
         self,
         whitespace=None,
@@ -57,12 +57,12 @@ class pyraxParser(Parser):
         parseinfo=True,
         keywords=None,
         namechars='',
-        buffer_class=pyraxBuffer,
+        buffer_class=PyraxBuffer,
         **kwargs
     ):
         if keywords is None:
             keywords = KEYWORDS
-        super(pyraxParser, self).__init__(
+        super(PyraxParser, self).__init__(
             whitespace=whitespace,
             nameguard=nameguard,
             comments_re=comments_re,
@@ -127,15 +127,15 @@ class pyraxParser(Parser):
                 self.name_last_node('@')
                 self._token(')')
             with self._option():
-                self._number_()
+                self._literal_()
             self._error('no available options')
 
     @graken()
-    def _number_(self):
-        self._pattern(r'[^+*\(\)@]+')
+    def _literal_(self):
+        self._pattern(r'(\\[\+*\(\)@]|[^\+*\(\)@])+')
 
 
-class pyraxSemantics(object):
+class PyraxSemantics(object):
     def start(self, ast):
         return ast
 
@@ -148,14 +148,14 @@ class pyraxSemantics(object):
     def factor(self, ast):
         return ast
 
-    def number(self, ast):
+    def literal(self, ast):
         return ast
 
 
 def main(filename, startrule, **kwargs):
     with open(filename) as f:
         text = f.read()
-    parser = pyraxParser()
+    parser = PyraxParser()
     return parser.parse(text, startrule, filename=filename, **kwargs)
 
 
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     import json
     from grako.util import asjson
 
-    ast = generic_main(main, pyraxParser, name='pyrax')
+    ast = generic_main(main, PyraxParser, name='Pyrax')
     print('AST:')
     print(ast)
     print()

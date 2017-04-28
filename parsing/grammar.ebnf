@@ -1,8 +1,8 @@
-@@grammar :: pyrax
+@@grammar :: Pyrax
 
 start = expression $;
 
 expression = head:term tail:{('+') term};
 term = head:factor tail:{('*' | '@') factor};
-factor = '(' @:expression ')' | number;
-number = /[^+*\(\)@]+/;
+factor = '(' @:expression ')' | literal;
+literal = /(\\[\+*\(\)@]|[^\+*\(\)@])+/;

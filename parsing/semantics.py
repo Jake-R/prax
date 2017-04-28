@@ -1,10 +1,11 @@
-from parser import parser
+from parsing import parser
 from grako.exceptions import FailedParse
 import pyrax
 
 
-class pyraxSemantics:
-    def __init__(self, target, src=None, operators = None):
+# noinspection PyMethodMayBeStatic
+class PyraxSemantics:
+    def __init__(self, target, src=None, operators=None):
         self.src = src
         self.target = target
         self.operators = operators
@@ -30,22 +31,23 @@ class pyraxSemantics:
                 count = self.target._to_int(rhs)
                 result = "".join(
                     [self.target._to_str(x)
-                     for x in range(start, start+count)])
+                     for x in range(start, start + count)])
         return result
 
-    def number(self, ast):
-        val = None
+    def literal(self, ast):
+        ast = ast.replace("\\", "")
         if self.src is not None:
             val = self.src.parse(ast)
         else:
-            val = pyrax.parse(ast)
+            val = pyrax.parse_to_int(ast)
         if self.operators is not None:
             val = self.operators(val)
         return self.target._to_str(val)
 
+
 def main():
     try:
-        parsy = parser.pyraxParser(semantics=pyraxSemantics(pyrax.Ascii))
+        parsy = parser.PyraxParser(semantics=PyraxSemantics(pyrax.Ascii))
         while True:
             try:
                 text = input('> ')
@@ -59,6 +61,6 @@ def main():
         print()
     print('bye')
 
+
 if __name__ == "__main__":
     main()
-

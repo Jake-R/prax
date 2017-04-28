@@ -1,61 +1,70 @@
 #!/usr/bin/python
 
-import sys
 import argparse
-import binascii
-import string
-import math
-import functools
 import base64
-from parser import parser as raxParser
-import semantics
-
+import binascii
+import functools
+import math
+import string
+from parsing import parser, semantics
+from grako.exceptions import FailedParse
 
 def compose(*functions):
     return functools.reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
 
+
 class Formatter(object):
-    def __init__(self, check = lambda x:True, strip = lambda x: x, add = lambda x: x):
+    def __init__(self, check=lambda x: True, strip=lambda x: x, add=lambda x: x):
         self.check = check
         self.strip = strip
         self.add = add
 
+
 class StartsWith(Formatter):
     def __init__(self, starts_with):
         self.starts_with = starts_with
-        super().__init__(check = lambda x: x.startswith(self.starts_with),
-                         strip = lambda x: x[len(self.starts_with):],
-                         add = lambda x: self.starts_with + x)
+        super().__init__(check=lambda x: x.startswith(self.starts_with),
+                         strip=lambda x: x[len(self.starts_with):],
+                         add=lambda x: self.starts_with + x)
+
 
 class EvenNum(Formatter):
     def __init__(self):
-        self.isEven = lambda x: len(x)%2 == 0
-        super().__init__(strip = lambda x: x,
-                         add = lambda x: x if self.isEven(x) else '0'+x)
+        self.isEven = lambda x: len(x) % 2 == 0
+        super().__init__(strip=lambda x: x,
+                         add=lambda x: x if self.isEven(x) else '0' + x)
+
 
 class EndsWith(Formatter):
     def __init__(self, ends_with):
         self.ends_with = ends_with
-        super().__init__(check = lambda x: x.endswith(self.ends_with),
-                         strip = lambda x: x[:len(self.ends_with)],
-                         add = lambda x: x + self.ends_with)
+        super().__init__(check=lambda x: x.endswith(self.ends_with),
+                         strip=lambda x: x[:len(self.ends_with)],
+                         add=lambda x: x + self.ends_with)
+
 
 class Operator(object):
     NAME = None
     FLAG = None
 
+    def operate(self, number):
+        return number
+
+
 class SwapEndianness(Operator):
     NAME = 'swap endianness'
     FLAG = 'e'
+
     @classmethod
     def add_args(cls, parser):
         parser.add_argument("-{}".format(cls.FLAG), action='store_true', default=False,
                             help='Apply "{}" operator to data'.format(cls.NAME))
         return parser
 
-    def operate(input: int) -> int:
-        to_byte = lambda x: x.to_bytes(math.ceil(math.log(x, 16) / 2), 'big')
-        return int.from_bytes(to_byte(input), 'little')
+    def operate(self, number: int) -> int:
+        def to_byte(x): x.to_bytes(math.ceil(math.log(x, 16) / 2), 'big')
+
+        return int.from_bytes(to_byte(number), 'little')
 
 
 class Type(object):
@@ -72,185 +81,196 @@ class Type(object):
         return parser
 
     @classmethod
-    def strip_format(cls, input):
-        return input
+    def strip_format(cls, string_):
+        return string_
 
     @classmethod
-    def add_format(cls, input):
-        return input
+    def add_format(cls, string_):
+        return string_
 
     @classmethod
-    def convert(cls, input):
+    def convert(cls, number):
         return None
 
     @classmethod
-    def parse(cls, input):
+    def parse(cls, string_):
         return None
 
     @classmethod
-    def _to_int(cls, input):
-        return cls.parse(input)
+    def _to_int(cls, string_):
+        return cls.parse(string_)
 
 
-class base_generic(Type):
+class Base(Type):
     BASE = None
     ALPHABET = string.digits + string.ascii_lowercase
 
     @classmethod
-    def strip_format(cls, input: str) -> str:
+    def strip_format(cls, string_: str) -> str:
         for fmt in cls.FORMATTERS:
-            if fmt.check(input):
-                input = fmt.strip(input)
+            if fmt.check(string_):
+                string_ = fmt.strip(string_)
             else:
                 return None
-        return input
+        return string_
+
     @classmethod
-    def add_format(cls, input):
+    def add_format(cls, string_):
         for fmt in reversed(cls.FORMATTERS):
-            input = fmt.add(input)
-        return input
-
+            string_ = fmt.add(string_)
+        return string_
 
     @classmethod
-    def parse(cls, input: str, force=False) -> int:
-        stripped = cls.strip_format(input)
-        if stripped is not None:  # string fits formatting of this type
+    def parse(cls, string_: str, force=False) -> int:
+        stripped = cls.strip_format(string_)
+        if stripped is not None:  # string_ fits formatting of this type
             return cls._to_int(stripped)
         if force:
-            return cls._to_int(input)
+            return cls._to_int(string_)
         return None
 
     @classmethod
     def convert(cls, *args) -> str:
-        val="".join([cls._to_str(x) for x in args])
+        val = "".join([cls._to_str(x) for x in args])
         return cls.add_format(val)
 
     @classmethod
-    def _to_int(cls, input):
-            try:
-                return int(input, cls.BASE)
-            except:
-                return None
+    def _to_int(cls, string_):
+        try:
+            return int(string_, cls.BASE)
+        except ValueError:
+            return None
 
-    # http://interactivepython.org/courselib/static/pythonds/Recursion/pythondsConvertinganIntegertoaStringinAnyBase.html
+    # http://interactivepython.org/courselib/static/pythonds/Recursion/pythondsConvertinganIntegertoastring_inAnyBase.html
     @classmethod
-    def _to_str(cls, input: int) -> str:
+    def _to_str(cls, number: int) -> str:
         if cls.BASE > len(cls.ALPHABET):
             print("too large of a base :(")
             return None
-        if input < cls.BASE:
-            return cls.ALPHABET[input]
+        if number < cls.BASE:
+            return cls.ALPHABET[number]
         else:
-            return cls._to_str(input // cls.BASE) + cls.ALPHABET[input % cls.BASE]
+            return cls._to_str(number // cls.BASE) + cls.ALPHABET[number % cls.BASE]
 
 
-class base_hex(base_generic):
+class BaseHex(Base):
     NAME = 'hex'
     BASE = 16
     FLAG = 'x'
     FORMATTERS = [StartsWith('0x'), EvenNum()]
 
-class base_decimal(base_generic):
+
+class BaseDecimal(Base):
     NAME = 'decimal'
     BASE = 10
     FLAG = 'd'
-class base_octal(base_generic):
+
+
+class BaseOctal(Base):
     NAME = 'octal'
     BASE = 8
     FLAG = 'o'
     FORMATTERS = [StartsWith('0o')]
 
-class base_binary(base_generic):
+
+class BaseBinary(Base):
     NAME = 'binary'
     BASE = 2
     FLAG = 'b'
     FORMATTERS = [StartsWith('0b')]
 
-class base_64(Type):
-    NAME="Base64"
+
+class Base64(Type):
+    NAME = "Base64"
     FLAG = 's'
 
     @classmethod
-    def parse(cls, input, force=False):
+    def parse(cls, string_, force=False):
         try:
-            return Ascii.parse(base64.b64decode(input))
-        except:
+            return Ascii.parse(base64.b64decode(string_))
+        except (ValueError, binascii.Error):
             return None
+
     @classmethod
-    def convert(cls, *input):
-        val = "".join([Ascii.convert(x) for x in input])
+    def convert(cls, *number):
+        val = "".join([Ascii.convert(x) for x in number])
         return base64.b64encode(val.encode('latin-1')).decode('latin-1')
+
     @classmethod
-    def _to_str(cls, *input):
-        return cls.convert(*input)
+    def _to_str(cls, *number):
+        return cls.convert(*number)
+
 
 class Ascii(Type):
     NAME = 'ascii'
     FLAG = 'r'
-    @classmethod
-    def strip_format(cls, input: str) -> str:
-        return input
-
-
 
     @classmethod
-    def parse(cls, input: str, force=False) -> int:
-        if type(input) is str:
-            input = input.encode('latin-1')
-        return base_hex.parse(binascii.hexlify(input).decode('latin1'), force = True)
+    def strip_format(cls, string_: str) -> str:
+        return string_
 
     @classmethod
-    def convert(cls, *input) -> str:
+    def parse(cls, string_: str, force=False) -> int:
+        if type(string_) is str:
+            string_ = string_.encode('latin-1')
+        return BaseHex.parse(binascii.hexlify(string_).decode('latin1'), force=True)
+
+    @classmethod
+    def convert(cls, *number) -> str:
         # convert int -> even numbered hex -> bytes -> raw
-        i = "".join([EvenNum().add(base_hex._to_str(x)) for x in input])
+        i = "".join([EvenNum().add(BaseHex._to_str(x)) for x in number])
         return binascii.unhexlify(i).decode("latin1")
 
     @classmethod
-    def _to_str(cls, *input):
-        return cls.convert(*input)
+    def _to_str(cls, *number):
+        return cls.convert(*number)
 
-classes = [base_hex, base_decimal, Ascii, base_64]
+
+classes = [BaseHex, BaseDecimal, Ascii, Base64]
 operators = [SwapEndianness]
 
-def parse(input):
-   return [y for y in [x.parse(input) for x in classes] if y is not None][0]
+
+def parse_to_int(string_):
+    return [y for y in [x.parse(string_) for x in classes] if y is not None][0]
+
 
 def main():
-
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input", nargs='+')
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("input", nargs='+')
     for x in classes + operators:
-        parser = x.add_args(parser)
-    args = parser.parse_args()
+        arg_parser = x.add_args(arg_parser)
+    args = arg_parser.parse_args()
     args_dict = vars(args)
-    input = None
-    output = None
+
+    input_type = None
+    output_type = None
     for x in classes:
         if args_dict[x.FLAG.lower()]:
-            output = x
+            output_type = x
         if args_dict[x.FLAG.upper()]:
-            input = x
+            input_type = x
+
     funcs = [x.operate for x in operators if args_dict[x.FLAG]]
     ops = []
     if funcs is not None:
         ops = compose(*funcs)
-    values = []
-    if output is None:
-        for in_value in args.input:
-            if input is None:
-                val = [y for y in [x.parse(in_value) for x in classes] if y is not None][0]
-                values.append(val)
-            else:
-                values.append(input.parse(in_value, force=True))
 
-            values = [ops(val) for val in values]
-
+    argument = " ".join(args.input)
+    if output_type is None:
+        values = []
+        for x in classes:
+            p = parser.PyraxParser(semantics=semantics.PyraxSemantics(x, input_type, operators=ops))
+            try:
+                values.append(x.add_format(p.parse(argument)))
+            except FailedParse:
+                print("Invalid syntax")
+                exit(1)
         for val in values:
-            print(" ".join([x.convert(val) for x in classes if x is not input]))
+            print(val)
     else:
-        p = raxParser.pyraxParser(semantics=semantics.pyraxSemantics(output))
-        print(output.add_format("".join([p.parse(x) for x in args.input])))
+        p = parser.PyraxParser(semantics=semantics.PyraxSemantics(output_type, operators=ops))
+        print(output_type.add_format(p.parse(argument)))
+
 
 if __name__ == "__main__":
     main()
