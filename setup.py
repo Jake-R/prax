@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name='pyrax',
+    name='prax',
     version='',
     packages=[''],
     url='',
@@ -11,8 +11,7 @@ setup(
     description='',
     entry_points={
         'console_scripts': [
-            'pyrax = pyrax:main',
-            'rax = pyrax:main'
+            'prax = prax:main'
         ]
     }
 )

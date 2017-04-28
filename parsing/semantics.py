@@ -1,10 +1,10 @@
 from parsing import parser
 from grako.exceptions import FailedParse
-import pyrax
+import prax
 
 
 # noinspection PyMethodMayBeStatic
-class PyraxSemantics:
+class PraxSemantics:
     def __init__(self, target, src=None, operators=None):
         self.src = src
         self.target = target
@@ -39,7 +39,7 @@ class PyraxSemantics:
         if self.src is not None:
             val = self.src.parse(ast)
         else:
-            val = pyrax.parse_to_int(ast)
+            val = prax.parse_to_int(ast)
         if self.operators is not None:
             val = self.operators(val)
         return self.target._to_str(val)
@@ -47,7 +47,7 @@ class PyraxSemantics:
 
 def main():
     try:
-        parsy = parser.PyraxParser(semantics=PyraxSemantics(pyrax.Ascii))
+        parsy = parser.PraxParser(semantics=PraxSemantics(prax.Ascii))
         while True:
             try:
                 text = input('> ')
