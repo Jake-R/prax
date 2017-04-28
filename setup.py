@@ -2,8 +2,8 @@ from distutils.core import setup
 
 setup(
     name='prax',
-    version='0.1.1.1',
-    packages=[''],
+    version='0.1.1.2',
+    packages=[],
     url='https://github.com/Jake-R/prax',
     license='MIT License',
     author='robie',
@@ -13,5 +13,6 @@ setup(
         'console_scripts': [
             'prax = prax:main'
         ]
-    }
+    },
+    install_requires=['grako', 'future']
 )
