@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='prax',
     version='0.1',
-    packages=['prax'],
+    packages=[''],
     url='https://github.com/Jake-R/prax',
     license='MIT License',
     author='robie',
