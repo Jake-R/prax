@@ -1,5 +1,6 @@
-from parsing import parser
 from grako.exceptions import FailedParse
+
+import parser
 import prax
 
 

@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='prax',
     version='0.1.1.2',
-    packages=[],
+    packages=['prax'],
     url='https://github.com/Jake-R/prax',
     license='MIT License',
     author='robie',
@@ -11,7 +11,7 @@ setup(
     description='A data conversion utility',
     entry_points={
         'console_scripts': [
-            'prax = prax:main'
+            'prax = prax.prax:main'
         ]
     },
     install_requires=['grako', 'future']

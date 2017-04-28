@@ -1,14 +1,15 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function
-from builtins import (bytes, str, open, super, range, zip, round, input, int, pow, object)
+
 import argparse
 import base64
 import binascii
 import functools
 import math
 import string
-from grako.exceptions import FailedParse
 
+from future.builtins import (str, super, int, object)
+from grako.exceptions import FailedParse
 
 
 def compose(*functions):
@@ -57,13 +58,15 @@ class EndsWith(Formatter):
                          strip=lambda x: x[:len(self.ends_with)],
                          add=lambda x: x + self.ends_with)
 
-
-class Operator(object):
-    """Base class for operators
-
-    children must implement NAME, FLAG, and operate"""
+class Thing(object):
     NAME = None
     FLAG = None
+
+
+class Operator(Thing):
+    """Base class for operators
+
+    subclasses must implement NAME, FLAG, and operate"""
 
     @classmethod
     def add_args(cls, parser):
@@ -98,12 +101,10 @@ class SwapEndianness(Operator):
         return int.from_bytes(bytes_, 'little')
 
 
-class Type(object):
+class Type(Thing):
     """Base class for input/output types
 
-    Must define NAME, FLAG, _to_int, _to_str"""
-    NAME = None
-    FLAG = None
+    subclasses Must define NAME, FLAG, _to_int, _to_str"""
     FORMATTERS = []
 
     @classmethod
@@ -302,7 +303,8 @@ def main():
     ops = compose(*funcs)
 
     # avoids a circular import
-    from parsing import parser, semantics
+    import semantics
+    import parser
 
     argument = " ".join(args.input)
     if output_type is None:
