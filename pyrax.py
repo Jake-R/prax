@@ -9,6 +9,7 @@ import string
 from parsing import parser, semantics
 from grako.exceptions import FailedParse
 
+
 def compose(*functions):
     return functools.reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
 
@@ -90,15 +91,19 @@ class Type(object):
 
     @classmethod
     def convert(cls, number):
-        return None
+        return cls.add_format(cls._to_str(number))
 
     @classmethod
     def parse(cls, string_):
-        return None
+        return cls._to_int(cls.strip_format(string_))
 
     @classmethod
     def _to_int(cls, string_):
-        return cls.parse(string_)
+        return None
+
+    @classmethod
+    def _to_str(cls, number):
+        return None
 
 
 class Base(Type):
@@ -180,50 +185,39 @@ class BaseBinary(Base):
     FORMATTERS = [StartsWith('0b')]
 
 
-class Base64(Type):
-    NAME = "Base64"
-    FLAG = 's'
-
-    @classmethod
-    def parse(cls, string_, force=False):
-        try:
-            return Ascii.parse(base64.b64decode(string_))
-        except (ValueError, binascii.Error):
-            return None
-
-    @classmethod
-    def convert(cls, *number):
-        val = "".join([Ascii.convert(x) for x in number])
-        return base64.b64encode(val.encode('latin-1')).decode('latin-1')
-
-    @classmethod
-    def _to_str(cls, *number):
-        return cls.convert(*number)
-
-
 class Ascii(Type):
     NAME = 'ascii'
     FLAG = 'r'
 
     @classmethod
-    def strip_format(cls, string_: str) -> str:
-        return string_
-
-    @classmethod
-    def parse(cls, string_: str, force=False) -> int:
-        if type(string_) is str:
-            string_ = string_.encode('latin-1')
-        return BaseHex.parse(binascii.hexlify(string_).decode('latin1'), force=True)
-
-    @classmethod
-    def convert(cls, *number) -> str:
+    def _to_str(cls, *number):
         # convert int -> even numbered hex -> bytes -> raw
         i = "".join([EvenNum().add(BaseHex._to_str(x)) for x in number])
         return binascii.unhexlify(i).decode("latin1")
 
     @classmethod
-    def _to_str(cls, *number):
-        return cls.convert(*number)
+    def _to_int(cls, string_):
+        if string_ is None:
+            return None
+        if type(string_) is str:
+            string_ = string_.encode('latin-1')
+        return BaseHex.parse(binascii.hexlify(string_).decode('latin1'), force=True)
+
+
+class Base64(Ascii):
+    NAME = "Base64"
+    FLAG = 's'
+
+    @classmethod
+    def strip_format(cls, string_):
+        try:
+            return base64.b64decode(string_)
+        except binascii.Error:
+            return None
+
+    @classmethod
+    def add_format(cls, string_):
+        return base64.b64encode(string_.encode('latin-1')).decode('latin-1')
 
 
 classes = [BaseHex, BaseDecimal, Ascii, Base64]
