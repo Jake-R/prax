@@ -1,13 +1,14 @@
 #!/usr/bin/python
-
+from __future__ import absolute_import, division, print_function
+from builtins import (bytes, str, open, super, range, zip, round, input, int, pow, object)
 import argparse
 import base64
 import binascii
 import functools
 import math
 import string
-from parsing import parser, semantics
 from grako.exceptions import FailedParse
+
 
 
 def compose(*functions):
@@ -86,7 +87,7 @@ class SwapEndianness(Operator):
     FLAG = 'e'
 
     @classmethod
-    def operate(self, number: int) -> int:
+    def operate(self, number):
         """Swaps the endianness of a value
 
         int.to_bytes requires a length of bytes so we take ceil(log(number)/(2*log(16)))
@@ -159,7 +160,7 @@ class Base(Type):
     ALPHABET = string.digits + string.ascii_lowercase
 
     @classmethod
-    def strip_format(cls, string_: str) -> str:
+    def strip_format(cls, string_):
         for fmt in cls.FORMATTERS:
             if fmt.check(string_):
                 string_ = fmt.strip(string_)
@@ -174,7 +175,7 @@ class Base(Type):
         return string_
 
     @classmethod
-    def parse(cls, string_: str, force=False) -> int:
+    def parse(cls, string_, force=False):
         stripped = cls.strip_format(string_)
         if stripped is not None:  # string_ fits formatting of this type
             return cls._to_int(stripped)
@@ -183,7 +184,7 @@ class Base(Type):
         return None
 
     @classmethod
-    def convert(cls, *args) -> str:
+    def convert(cls, *args):
         val = "".join([cls._to_str(x) for x in args])
         return cls.add_format(val)
 
@@ -196,7 +197,7 @@ class Base(Type):
 
     # http://interactivepython.org/courselib/static/pythonds/Recursion/pythondsConvertinganIntegertoastring_inAnyBase.html
     @classmethod
-    def _to_str(cls, number: int) -> str:
+    def _to_str(cls, number):
         if cls.BASE > len(cls.ALPHABET):
             raise ArithmeticError("Too large of a base for alphabet")
         if number < cls.BASE:
@@ -263,7 +264,7 @@ class Base64(Ascii):
     def strip_format(cls, string_):
         try:
             return base64.b64decode(string_)
-        except binascii.Error:
+        except (binascii.Error, TypeError):
             return None
 
     @classmethod
@@ -299,6 +300,9 @@ def main():
 
     funcs = [x.operate for x in operators if args_dict[x.FLAG]]
     ops = compose(*funcs)
+
+    # avoids a circular import
+    from parsing import parser, semantics
 
     argument = " ".join(args.input)
     if output_type is None:
