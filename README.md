@@ -1,5 +1,5 @@
 # Prax
-Prax is a data conversion utility a la radare2's rax. It allows the user to enter a snippet of data in one format and see it in a number of other formats (hex, decimal, binary, raw, Base 64, etc.) and optionally to apply operators to the raw data (swap endianness currently)
+[Prax](http://www.imdb.com/character/ch0566106/) is a data conversion utility a la radare2's rax. It allows the user to enter a snippet of data in one format and see it in a number of other formats (hex, decimal, binary, raw, Base 64, etc.) and optionally to apply operators to the raw data (swap endianness currently)
 
 # Examples
 When no output format is specified, Prax allows you to see all the permutations of the input(s):
