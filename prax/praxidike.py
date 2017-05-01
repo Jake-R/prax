@@ -9,6 +9,7 @@ import functools
 import math
 import string
 import os
+import sys
 from grako.exceptions import FailedParse
 
 
@@ -242,7 +243,7 @@ class Ascii(Type):
     def _to_str(cls, *number):
         # convert int -> even numbered hex -> bytes -> raw
         i = "".join([EvenNum('0').add(BaseHex._to_str(x)) for x in number])
-        return binascii.unhexlify(i).decode("latin1")
+        return binascii.unhexlify(i)
 
     @classmethod
     def _to_int(cls, string_):
@@ -269,8 +270,13 @@ class Base64(Ascii):
             return None
 
     @classmethod
-    def add_format(cls, string_):
-        return base64.b64encode(string_.encode('latin-1')).decode('latin-1')
+    def add_format(cls, input_):
+        if type(input_) == str:
+            input_ = input_.encode('latin-1')
+        try:
+            return base64.b64encode(input_).decode('latin-1')
+        except:
+            raise
 
 
 types = [BaseHex, BaseDecimal, Ascii, Base64]
@@ -282,6 +288,13 @@ def parse_to_int(string_):
     """Helper function to get the value of the first type"""
     return [y for y in [x.parse(string_) for x in types] if y is not None][0]
 
+def print_helper(input_, line_end=" "):
+    if type(input_) == bytes:
+        sys.stdout.buffer.write(input_)
+        print(line_end, end="")
+    else:
+        print(input_, end=" ")
+    sys.stdout.flush()
 
 def main():
     arg_parser = argparse.ArgumentParser()
@@ -305,23 +318,24 @@ def main():
     ops = compose(*funcs)
 
     # avoids a circular import
-    import semantics
-    import parser
+    from prax import parser
+    from prax import semantics
 
     argument = " ".join(args.input)
     if output_type is None:
-        values = []
         for x in types:
             p = parser.PraxParser(semantics=semantics.PraxSemantics(x, input_type, operators=ops))
             try:
-                values.append(x.add_format(p.parse(argument)))
+                parse_result = p.parse(argument)
+                fmted = x.add_format(parse_result)
+                print_helper(fmted, " ")
             except FailedParse:
                 print("Invalid syntax")
                 exit(1)
-        print(" ".join(values), end=print_end)
+        print(print_end, end="")
     else:
         p = parser.PraxParser(semantics=semantics.PraxSemantics(output_type, input_type, operators=ops))
-        print(output_type.add_format(p.parse(argument)), end=print_end)
+        print_helper(output_type.add_format(p.parse(argument)), print_end)
 
 
 if __name__ == "__main__":

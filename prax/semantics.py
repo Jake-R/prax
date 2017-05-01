@@ -1,7 +1,7 @@
 from grako.exceptions import FailedParse
 
-import parser
-import prax
+from prax import parser
+from prax import praxidike
 
 
 # noinspection PyMethodMayBeStatic
@@ -40,7 +40,7 @@ class PraxSemantics:
         if self.src is not None:
             val = self.src.parse(ast)
         else:
-            val = prax.parse_to_int(ast)
+            val = praxidike.parse_to_int(ast)
         if self.operators is not None:
             val = self.operators(val)
         return self.target._to_str(val)
@@ -48,7 +48,7 @@ class PraxSemantics:
 
 def main():
     try:
-        parsy = parser.PraxParser(semantics=PraxSemantics(prax.Ascii))
+        parsy = parser.PraxParser(semantics=PraxSemantics(praxidike.Ascii))
         while True:
             try:
                 text = input('> ')
