@@ -30,9 +30,9 @@ class PraxSemantics:
             if '@' == ops:
                 start = self.target._to_int(result)
                 count = self.target._to_int(rhs)
-                result = "".join(
-                    [self.target._to_str(x)
-                     for x in range(start, start + count)])
+                result = self.target._to_str(start)
+                for x in range(start + 1, start + count):
+                    result = result + self.target._to_str(x)
         return result
 
     def literal(self, ast):

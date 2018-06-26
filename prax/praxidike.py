@@ -10,6 +10,7 @@ import math
 import string
 import os
 import sys
+
 from grako.exceptions import FailedParse
 
 
@@ -27,6 +28,7 @@ class Formatter(object):
 
        Used to simplify parsing of literals by condensing repetitive formatting rules into
        single classes"""
+
     def __init__(self, check=lambda x: True, strip=lambda x: x, add=lambda x: x):
         self.check = check
         self.strip = strip
@@ -35,6 +37,7 @@ class Formatter(object):
 
 class StartsWith(Formatter):
     """Formatter for types that start with a specific string"""
+
     def __init__(self, starts_with):
         self.starts_with = starts_with
         super().__init__(check=lambda x: x.startswith(self.starts_with),
@@ -44,6 +47,7 @@ class StartsWith(Formatter):
 
 class EvenNum(Formatter):
     """Formatter for types that require an even length (hex)"""
+
     def __init__(self, padding_char):
         self.padding_char = padding_char
         super().__init__(check=lambda x: len(x) % 2 == 0,
@@ -53,11 +57,13 @@ class EvenNum(Formatter):
 
 class EndsWith(Formatter):
     """Formatter for types that end with a specific string"""
+
     def __init__(self, ends_with):
         self.ends_with = ends_with
         super().__init__(check=lambda x: x.endswith(self.ends_with),
                          strip=lambda x: x[:len(self.ends_with)],
                          add=lambda x: x + self.ends_with)
+
 
 class Thing(object):
     NAME = None
@@ -82,24 +88,46 @@ class Operator(Thing):
         return number
 
 
-class SwapEndianness(Operator):
+class ArgOperator(Operator):
+    """Class for operators that take one or more arguments
+
+    subclasses must implement NAME, FLAG, ARGS, and operate"""
+
+    @classmethod
+    def add_args(cls, parser):
+        """Adds argument to an ArgumentParser according to NAME and FLAG"""
+        parser.add_argument("-{}".format(cls.FLAG), metavar=cls.ARGS, required=False,
+                            help='Apply "{}" operator to data'.format(cls.NAME))
+        return parser
+
+
+class SwapEndianness(ArgOperator):
     """Swaps the endianness of a value
 
     Currently swaps the byte order of the full string
     should consider options to allow for selecting a byte length to swap inside the value"""
     NAME = 'swap endianness'
     FLAG = 'e'
+    ARGS = ('num_bytes')
 
-    @classmethod
-    def operate(self, number):
+    @staticmethod
+    def operate(arg, number):
         """Swaps the endianness of a value
 
         int.to_bytes requires a length of bytes so we take ceil(log(number)/(2*log(16)))
         to make sure nothing is truncated"""
+        arg = int(arg)
         log = math.log(number, 16)
-        ceil = math.ceil(log / 2)
-        bytes_ = number.to_bytes(ceil, 'big')
-        return int.from_bytes(bytes_, 'little')
+        ceil = int(math.ceil(log / 2))
+        mask = 0
+        for x in range(0, arg):
+            mask = (mask << 8) + 0xFF
+        result = 0
+        for i in range(0, int(math.ceil(ceil / arg))):
+            bytes_ = ((number >> (i * 8 * arg)) & mask).to_bytes(arg, 'big')
+            val = int.from_bytes(bytes_, 'little')
+            result += val << (i * 8 * arg)
+        return result
 
 
 class Type(Thing):
@@ -288,13 +316,15 @@ def parse_to_int(string_):
     """Helper function to get the value of the first type"""
     return [y for y in [x.parse(string_) for x in types] if y is not None][0]
 
+
 def print_helper(input_, line_end=" "):
     if type(input_) == bytes:
-        sys.stdout.buffer.write(input_)
+        os.write(sys.stdout.fileno(), input_)
         print(line_end, end="")
     else:
         print(input_, end=" ")
     sys.stdout.flush()
+
 
 def main():
     arg_parser = argparse.ArgumentParser()
@@ -313,8 +343,15 @@ def main():
             output_type = x
         if args_dict[x.FLAG.upper()]:
             input_type = x
-
-    funcs = [x.operate for x in operators if args_dict[x.FLAG]]
+    # import ipdb; ipdb.set_trace()
+    funcs = []
+    for operator in operators:
+        if args_dict[operator.FLAG]:
+            if issubclass(operator, ArgOperator):
+                funcs.append(functools.partial(
+                    operator.operate, args_dict[operator.FLAG]))
+            else:
+                funcs.append(operator.operate)
     ops = compose(*funcs)
 
     # avoids a circular import
