@@ -1,379 +1,160 @@
-#!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
-from future.builtins import (str, super, int, object)
+from builtins import *
 
-import argparse
-import base64
-import binascii
-import functools
 import math
-import string
-import os
+import binascii
+import types
 import sys
 
-from grako.exceptions import FailedParse
+
+funcs = []
 
 
-def compose(*functions):
-    """Combines one or more functions into a single function"""
-    if len(functions) == 0:
-        return None
-    elif len(functions) == 1:
-        return functions[0]
-    return functools.reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
+def praxfunction(func):
+    funcs.append(func)
+    return func
 
 
-class Formatter(object):
-    """A standard formatting object
-
-       Used to simplify parsing of literals by condensing repetitive formatting rules into
-       single classes"""
-
-    def __init__(self, check=lambda x: True, strip=lambda x: x, add=lambda x: x):
-        self.check = check
-        self.strip = strip
-        self.add = add
+def isiterable(obj):
+    try:
+        iter(obj)
+    except TypeError:
+        return False
+    return True
 
 
-class StartsWith(Formatter):
-    """Formatter for types that start with a specific string"""
-
-    def __init__(self, starts_with):
-        self.starts_with = starts_with
-        super().__init__(check=lambda x: x.startswith(self.starts_with),
-                         strip=lambda x: x[len(self.starts_with):],
-                         add=lambda x: self.starts_with + x)
+def int_from_bytes(bytes_, endianness='big'):
+    return int.from_bytes(bytes_, endianness)
 
 
-class EvenNum(Formatter):
-    """Formatter for types that require an even length (hex)"""
-
-    def __init__(self, padding_char):
-        self.padding_char = padding_char
-        super().__init__(check=lambda x: len(x) % 2 == 0,
-                         strip=lambda x: x,
-                         add=lambda x: x if self.check(x) else self.padding_char + x)
+def int_to_bytes(int_, endianness='big'):
+    """Helper to convert int to properly sized bytes object"""
+    return int_.to_bytes((int_.bit_length() + 7) // 8, endianness)
 
 
-class EndsWith(Formatter):
-    """Formatter for types that end with a specific string"""
-
-    def __init__(self, ends_with):
-        self.ends_with = ends_with
-        super().__init__(check=lambda x: x.endswith(self.ends_with),
-                         strip=lambda x: x[:len(self.ends_with)],
-                         add=lambda x: x + self.ends_with)
+def pad_even(input_, padding='0'):
+    if len(input_) % 2 != 0:
+        return b'0' + input_
+    return input_
 
 
-class Thing(object):
-    NAME = None
-    FLAG = None
+class PraxException(BaseException):
+    pass
 
 
-class Operator(Thing):
-    """Base class for operators
+class PraxBytes(object):
+    def __init__(self, input):
+        if isinstance(input, PraxBytes):
+            self.bytes = input.bytes
+        elif isinstance(input, str):
 
-    subclasses must implement NAME, FLAG, and operate"""
-
-    @classmethod
-    def add_args(cls, parser):
-        """Adds argument to an ArgumentParser according to NAME and FLAG"""
-        parser.add_argument("-{}".format(cls.FLAG), action='store_true', default=False,
-                            help='Apply "{}" operator to data'.format(cls.NAME))
-        return parser
-
-    @staticmethod
-    def operate(self, number):
-        """performs an operation on value"""
-        return number
-
-
-class ArgOperator(Operator):
-    """Class for operators that take one or more arguments
-
-    subclasses must implement NAME, FLAG, ARGS, and operate"""
-
-    @classmethod
-    def add_args(cls, parser):
-        """Adds argument to an ArgumentParser according to NAME and FLAG"""
-        parser.add_argument("-{}".format(cls.FLAG), metavar=cls.ARGS, required=False,
-                            help='Apply "{}" operator to data'.format(cls.NAME))
-        return parser
-
-
-class SwapEndianness(ArgOperator):
-    """Swaps the endianness of a value
-
-    Currently swaps the byte order of the full string
-    should consider options to allow for selecting a byte length to swap inside the value"""
-    NAME = 'swap endianness'
-    FLAG = 'e'
-    ARGS = ('num_bytes')
-
-    @staticmethod
-    def operate(arg, number):
-        """Swaps the endianness of a value
-
-        int.to_bytes requires a length of bytes so we take ceil(log(number)/(2*log(16)))
-        to make sure nothing is truncated"""
-        arg = int(arg)
-        log = math.log(number, 16)
-        ceil = int(math.ceil(log / 2))
-        mask = 0
-        for x in range(0, arg):
-            mask = (mask << 8) + 0xFF
-        result = 0
-        for i in range(0, int(math.ceil(ceil / arg))):
-            bytes_ = ((number >> (i * 8 * arg)) & mask).to_bytes(arg, 'big')
-            val = int.from_bytes(bytes_, 'little')
-            result += val << (i * 8 * arg)
-        return result
-
-
-class Type(Thing):
-    """Base class for input/output types
-
-    subclasses Must define NAME, FLAG, _to_int, _to_str"""
-    FORMATTERS = []
-
-    @classmethod
-    def add_args(cls, parser):
-        """adds arguments according to NAME and FLAG"""
-        parser.add_argument("-{}".format(cls.FLAG.lower()), action='store_true', default=False,
-                            help="output in {}".format(cls.NAME))
-        parser.add_argument("-{}".format(cls.FLAG.upper()), action='store_true', default=False,
-                            help="force input as {}".format(cls.NAME))
-        return parser
-
-    @classmethod
-    def strip_format(cls, string_):
-        """Strips formatting of this type from a string
-
-        return None if formatting is not present"""
-        return string_
-
-    @classmethod
-    def add_format(cls, string_):
-        """Adds formatting of this type to a string"""
-        return string_
-
-    @classmethod
-    def convert(cls, number):
-        """Converts an int to a formatted string of this type"""
-        return cls.add_format(cls._to_str(number))
-
-    @classmethod
-    def parse(cls, string_):
-        """converts a formatted string of this type to an int"""
-        return cls._to_int(cls.strip_format(string_))
-
-    @classmethod
-    def _to_int(cls, string_):
-        """Converts an unformatted string of this type to an int
-
-        Must be implemented by subclass"""
-        raise NotImplementedError
-
-    @classmethod
-    def _to_str(cls, number):
-        """Converts an int to an unformatted string of this type
-
-        Must be implemented by subclass"""
-        raise NotImplementedError
-
-
-class Base(Type):
-    """Base class for generic base conversions (not base64)
-
-    subclass must specify BASE=int and optionally FORMATTERS"""
-    BASE = None
-    ALPHABET = string.digits + string.ascii_lowercase
-
-    @classmethod
-    def strip_format(cls, string_):
-        for fmt in cls.FORMATTERS:
-            if fmt.check(string_):
-                string_ = fmt.strip(string_)
-            else:
-                return None
-        return string_
-
-    @classmethod
-    def add_format(cls, string_):
-        for fmt in reversed(cls.FORMATTERS):
-            string_ = fmt.add(string_)
-        return string_
-
-    @classmethod
-    def parse(cls, string_, force=False):
-        stripped = cls.strip_format(string_)
-        if stripped is not None:  # string_ fits formatting of this type
-            return cls._to_int(stripped)
-        if force:
-            return cls._to_int(string_)
-        return None
-
-    @classmethod
-    def convert(cls, *args):
-        val = "".join([cls._to_str(x) for x in args])
-        return cls.add_format(val)
-
-    @classmethod
-    def _to_int(cls, string_):
-        try:
-            return int(string_, cls.BASE)
-        except ValueError:
-            return None
-
-    # http://interactivepython.org/courselib/static/pythonds/Recursion/pythondsConvertinganIntegertoastring_inAnyBase.html
-    @classmethod
-    def _to_str(cls, number):
-        if cls.BASE > len(cls.ALPHABET):
-            raise ArithmeticError("Too large of a base for alphabet")
-        if number < cls.BASE:
-            return cls.ALPHABET[number]
+            self.bytes = bytes(input, encoding='utf-8')
+        elif isiterable(input):
+            self.bytes = bytes(input)
+        elif isinstance(input, int):
+            self.bytes = int_to_bytes(int(input), 'big')
         else:
-            return cls._to_str(number // cls.BASE) + cls.ALPHABET[number % cls.BASE]
+            raise PraxException("Cannot create PB object with input type {}".format(type(input)))
+        for item in funcs:
+            setattr(self, item.__name__, types.MethodType(item, self))
 
+    def __str__(self):
+        return self.bytes
 
-class BaseHex(Base):
-    NAME = 'hex'
-    BASE = 16
-    FLAG = 'x'
-    FORMATTERS = [StartsWith('0x'), EvenNum('0')]
+    def __repr__(self):
+        raw = self.H().raw
+        if len(raw) > 50:
+            raw = "{}...".format(raw[:50])
+        return "<PraxBytes: 0x{}>".format(raw)
 
-
-class BaseDecimal(Base):
-    NAME = 'decimal'
-    BASE = 10
-    FLAG = 'd'
-
-
-class BaseOctal(Base):
-    NAME = 'octal'
-    BASE = 8
-    FLAG = 'o'
-    FORMATTERS = [StartsWith('0o')]
-
-
-class BaseBinary(Base):
-    NAME = 'binary'
-    BASE = 2
-    FLAG = 'b'
-    FORMATTERS = [StartsWith('0b')]
-
-
-class Ascii(Type):
-    NAME = 'ascii'
-    FLAG = 'r'
-
-    @classmethod
-    def _to_str(cls, *number):
-        # convert int -> even numbered hex -> bytes -> raw
-        i = "".join([EvenNum('0').add(BaseHex._to_str(x)) for x in number])
-        return binascii.unhexlify(i)
-
-    @classmethod
-    def _to_int(cls, string_):
-        if string_ is None:
-            return None
-        if type(string_) is str:
-            string_ = string_.encode('latin-1')
-        return BaseHex.parse(binascii.hexlify(string_).decode('latin1'), force=True)
-
-
-class Base64(Ascii):
-    """Base64 type
-
-    Inherits from ascii because all internal operations should be performed on strings
-    so that b64 conversion doesn't pad in the middle of the string"""
-    NAME = "Base64"
-    FLAG = 's'
-
-    @classmethod
-    def strip_format(cls, string_):
+    def __eq__(self, other):
         try:
-            return base64.b64decode(string_)
-        except (binascii.Error, TypeError):
-            return None
+            return self.bytes == PraxBytes(other).bytes
+        except PraxException:
+            return NotImplemented
 
-    @classmethod
-    def add_format(cls, input_):
-        if type(input_) == str:
-            input_ = input_.encode('latin-1')
+    @staticmethod
+    def _realadd(left, right):
         try:
-            return base64.b64encode(input_).decode('latin-1')
-        except:
-            raise
+            return PraxBytes(PraxBytes(left).bytes + PraxBytes(right).bytes)
+        except PraxException:
+            return NotImplemented
+
+    def __add__(self, other):
+        return self._realadd(self, other)
+
+    def __radd__(self, other):
+        return self._realadd(other, self)
+
+    def __getitem__(self, item):
+        return PraxBytes(self.bytes.__getitem__(item))
+
+    def __contains__(self, item):
+        return self.bytes.__contains__(PraxBytes(item).bytes)
 
 
-types = [BaseHex, BaseDecimal, Ascii, Base64]
-target_types = types + [BaseBinary, BaseOctal]
-operators = [SwapEndianness]
+p = PraxBytes
 
 
-def parse_to_int(string_):
-    """Helper function to get the value of the first type"""
-    return [y for y in [x.parse(string_) for x in types] if y is not None][0]
+def praxoutput(func):
+    setattr(PraxBytes, func.__name__, property(func))
+    return func
+
+@praxoutput
+def utf_8(praxbytes):
+    return praxbytes.bytes.decode('utf-8')
+
+@praxoutput
+def raw(praxbytes):
+    return praxbytes.bytes.decode('latin-1')
+
+@praxoutput
+def num(praxbytes):
+    return int_from_bytes(praxbytes.bytes, 'big')
+
+@praxfunction
+def H(pb):
+    pb = PraxBytes(pb)
+    return PraxBytes(binascii.hexlify(pb.bytes))
 
 
-def print_helper(input_, line_end=" "):
-    if type(input_) == bytes:
-        os.write(sys.stdout.fileno(), input_)
-        print(line_end, end="")
-    else:
-        print(input_, end=" ")
-    sys.stdout.flush()
+@praxfunction
+def h(pb):
+    pb = PraxBytes(pb)
+    return PraxBytes(binascii.unhexlify(pad_even(pb.bytes)))
 
 
-def main():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("input", nargs='+', help="literal or expression to parse")
-    arg_parser.add_argument("-n", action='store_true', help="don't print newline")
-    for x in target_types + operators:
-        arg_parser = x.add_args(arg_parser)
-    args = arg_parser.parse_args()
-    print_end = "" if args.n else os.linesep
-    args_dict = vars(args)
+@praxfunction
+def e(pb, num_bytes=4):
+    """
+    Swaps endianness
+    @param pb: input
+    @param num_bytes: number of bytes to use when swapping endianness
+    @return: PB of swapped bytes
+    """
+    pb = PraxBytes(pb)
+    byteswap = bytearray(len(pb.bytes))
+    for i in range(num_bytes):
+        byteswap[i::num_bytes] = pb.bytes[num_bytes-1-i::num_bytes]
+    return PraxBytes(byteswap)
 
-    input_type = None
-    output_type = None
-    for x in target_types:
-        if args_dict[x.FLAG.lower()]:
-            output_type = x
-        if args_dict[x.FLAG.upper()]:
-            input_type = x
-    # import ipdb; ipdb.set_trace()
-    funcs = []
-    for operator in operators:
-        if args_dict[operator.FLAG]:
-            if issubclass(operator, ArgOperator):
-                funcs.append(functools.partial(
-                    operator.operate, args_dict[operator.FLAG]))
-            else:
-                funcs.append(operator.operate)
-    ops = compose(*funcs)
 
-    # avoids a circular import
-    from prax import parser
-    from prax import semantics
+@praxfunction
+def f(pb):
+    pb = PraxBytes(pb)
+    return PraxBytes(open(pb.raw, 'rb').read())
 
-    argument = " ".join(args.input)
-    if output_type is None:
-        for x in types:
-            p = parser.PraxParser(semantics=semantics.PraxSemantics(x, input_type, operators=ops))
-            try:
-                parse_result = p.parse(argument)
-                fmted = x.add_format(parse_result)
-                print_helper(fmted, " ")
-            except FailedParse:
-                print("Invalid syntax")
-                exit(1)
-        print(print_end, end="")
-    else:
-        p = parser.PraxParser(semantics=semantics.PraxSemantics(output_type, input_type, operators=ops))
-        print_helper(output_type.add_format(p.parse(argument)), print_end)
+
+def stdin():
+    return PraxBytes(sys.stdin.read())
+
+
+@praxfunction
+def plusone(pb):
+    number = int_from_bytes(pb.bytes)
+    return PraxBytes(int_to_bytes(number + 1))
 
 
 if __name__ == "__main__":
-    main()
+    import IPython
+    IPython.embed()

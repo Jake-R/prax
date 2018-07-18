@@ -14,5 +14,4 @@ setup(
             'prax = prax.praxidike:main'
         ]
     },
-    install_requires=['grako', 'future']
 )

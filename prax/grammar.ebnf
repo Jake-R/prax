@@ -1,8 +1,0 @@
-@@grammar :: Prax
-
-start = expression $;
-
-expression = head:term tail:{('+') term};
-term = head:factor tail:{('*' | '@') factor};
-factor = '(' @:expression ')' | literal;
-literal = /(\\[\+*\(\)@]|[^\+*\(\)@])+/;
