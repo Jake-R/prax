@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
-from builtins import *
+from builtins import (ascii, bytes, chr, dict, filter, hex, input,
+                      int, map, next, oct, open, pow, range, round,
+                      str, super, zip)
 
 import math
 import binascii
@@ -93,12 +95,10 @@ class PraxBytes(object):
         return self.bytes.__contains__(PraxBytes(item).bytes)
 
 
-p = PraxBytes
-
-
 def praxoutput(func):
     setattr(PraxBytes, func.__name__, property(func))
     return func
+
 
 @praxoutput
 def utf_8(praxbytes):
@@ -116,7 +116,6 @@ def num(praxbytes):
 def H(pb):
     pb = PraxBytes(pb)
     return PraxBytes(binascii.hexlify(pb.bytes))
-
 
 @praxfunction
 def h(pb):
@@ -153,7 +152,6 @@ def stdin():
 def plusone(pb):
     number = int_from_bytes(pb.bytes)
     return PraxBytes(int_to_bytes(number + 1))
-
 
 if __name__ == "__main__":
     import IPython

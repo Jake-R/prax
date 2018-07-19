@@ -11,7 +11,7 @@ setup(
     description='A data conversion utility',
     entry_points={
         'console_scripts': [
-            'prax = prax.praxidike:main'
+            'prax = prax.__init__:main'
         ]
     },
 )
