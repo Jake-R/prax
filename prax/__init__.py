@@ -1,17 +1,5 @@
-from .praxbytes import PraxBytes, PraxException, praxoutput, praxfunction
-### delete ###
-from prax import praxbytes
-### end delete ###
+from .praxbytes import PraxBytes, PraxException, praxoutput, praxfunction, praxexport
 
-p = PraxBytes
+from prax.core import *
 
-for x in praxbytes.funcs:
-    globals()[x.__name__] = x
-
-
-del praxbytes
-
-
-if __name__ == "__main__":
-    import IPython
-    IPython.embed()
+del core
