@@ -2,4 +2,4 @@ from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfun
 
 from prax.core import *
 
-del core
+# del core

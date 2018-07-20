@@ -8,7 +8,6 @@ from funcsigs import signature, _empty
 
 from prax import *
 # for print_funcs #
-from prax import core
 
 
 # end print_funcs #
@@ -44,17 +43,19 @@ Chain conversions and manipulate data using normal operators:
               print_funcs(core)
 
 
-def main():
+def main(args):
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")
     parser.add_argument("input")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     end = "" if args.no_newline else "\n"
-    os.write(sys.stdout.fileno(), eval(args.input).bytes)
+    if input:
+        os.write(sys.stdout.fileno(), p(eval(args.input)).bytes)
     print("", end=end)
     sys.stdout.flush()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
