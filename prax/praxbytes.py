@@ -12,7 +12,7 @@ class PraxException(BaseException):
 
 
 class PraxBytes(object):
-    def __init__(self, input):
+    def __init__(self, input=b""):
         if isinstance(input, PraxBytes):
             self.bytes = input.bytes
         elif isinstance(input, str):
@@ -40,12 +40,22 @@ class PraxBytes(object):
         except PraxException:
             return NotImplemented
 
+    def __getitem__(self, item):
+        return PraxBytes(self.bytes.__getitem__(item))
+
+    def __contains__(self, item):
+        return self.bytes.__contains__(PraxBytes(item).bytes)
+
     @staticmethod
-    def _realadd(left, right):
+    def _realapply(left, right, func):
         try:
-            return PraxBytes(PraxBytes(left).bytes + PraxBytes(right).bytes)
+            return PraxBytes(func(PraxBytes(left), PraxBytes(right)))
         except PraxException:
             return NotImplemented
+
+    # Concatenation (+)
+    def _realadd(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.bytes + y.bytes)
 
     def __add__(self, other):
         return self._realadd(self, other)
@@ -53,11 +63,82 @@ class PraxBytes(object):
     def __radd__(self, other):
         return self._realadd(other, self)
 
-    def __getitem__(self, item):
-        return PraxBytes(self.bytes.__getitem__(item))
+    # multiply
+    def _realmul(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.bytes * y.num)
 
-    def __contains__(self, item):
-        return self.bytes.__contains__(PraxBytes(item).bytes)
+    def __mul__(self, other):
+        return self._realmul(self, other)
+
+    def __rmul__(self, other):
+        return self._realmul(other, self)
+
+    # lshift
+    def _reallshift(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.num << y.num)
+
+    def __lshift__(self, other):
+        return self._reallshift(self, other)
+
+    def __rlshift__(self, other):
+        return self._reallshift(other, self)
+
+    # rshift
+    def _realrshift(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.num >> y.num)
+
+    def __rshift__(self, other):
+        return self._realrshift(self, other)
+
+    def __rrshift__(self, other):
+        return self._realrshift(other, self)
+
+    # rshift
+    def _realand(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.num & y.num)
+
+    def __and__(self, other):
+        return self._realand(self, other)
+
+    def __rand__(self, other):
+        return self._realand(other, self)
+
+    # rshift
+    def _realxor(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.num ^ y.num)
+
+    def __xor__(self, other):
+        return self._realxor(self, other)
+
+    def __rxor__(self, other):
+        return self._realxor(other, self)
+
+    # rshift
+    def _realor(self, left, right):
+        return self._realapply(left, right, lambda x, y: x.num | y.num)
+
+    def __or__(self, other):
+        return self._realor(self, other)
+
+    def __ror__(self, other):
+        return self._realor(other, self)
+
+    # multiply and increase
+    @staticmethod
+    def _realmatmul(left, right):
+        try:
+            res = PraxBytes()
+            for i in range(PraxBytes(right).num):
+                res += PraxBytes(PraxBytes(left).num + i)
+            return res
+        except PraxException:
+            return NotImplemented
+
+    def __matmul__(self, other):
+        return self._realmatmul(self, other)
+
+    def __rmatmul__(self, other):
+        return self._realmatmul(other, self)
 
 
 def praxoutput(func):

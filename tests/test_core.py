@@ -1,10 +1,9 @@
 from hypothesis import given, example, strategies as st
-from hypothesis.strategies import text
 
 from prax import *
 
 
-@given(text())
+@given(st.text())
 def test_utf_8(s):
     assert p(s).utf_8 == s
 

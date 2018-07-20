@@ -21,18 +21,21 @@ def num(praxbytes):
     """Decode as int (big-endian)"""
     return int_from_bytes(praxbytes.bytes, 'big')
 
-
 @praxexport
-def p(input):
-    """Convert to PraxBytes object"""
+def p(input=b""):
     return PraxBytes(input)
-
 
 @praxfunction
 def H(input):
     """Convert to hexadecimal representation"""
     input = PraxBytes(input)
     return PraxBytes(binascii.hexlify(input.bytes))
+
+
+@praxfunction
+def b(input):
+    """Convert to binary representation"""
+    return p(bin(p(input).num)[2:])
 
 
 @praxfunction
