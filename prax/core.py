@@ -1,4 +1,4 @@
-from prax.praxbytes import PraxBytes, praxoutput, praxfunction, praxexport
+from prax.praxbytes import PraxBytes, praxoutput, praxmethod, praxfunction
 from prax.utility import int_from_bytes, int_to_bytes, pad_even
 import binascii
 import sys
@@ -21,11 +21,15 @@ def num(praxbytes):
     """Decode as int (big-endian)"""
     return int_from_bytes(praxbytes.bytes, 'big')
 
-@praxexport
-def p(input=b""):
-    return PraxBytes(input)
 
 @praxfunction
+def p(input=b""):
+    """Convert to PraxBytes"""
+    return PraxBytes(input)
+
+
+@praxfunction
+@praxmethod
 def H(input):
     """Convert to hexadecimal representation"""
     input = PraxBytes(input)
@@ -33,12 +37,14 @@ def H(input):
 
 
 @praxfunction
+@praxmethod
 def b(input):
     """Convert to binary representation"""
     return p(bin(p(input).num)[2:])
 
 
 @praxfunction
+@praxmethod
 def h(input):
     """Convert from hexadecimal representation"""
     input = PraxBytes(input)
@@ -46,6 +52,7 @@ def h(input):
 
 
 @praxfunction
+@praxmethod
 def e(input, num_bytes=4):
     """Swaps endianness. optional param 'num_bytes'
     @param input: input
@@ -60,13 +67,14 @@ def e(input, num_bytes=4):
 
 
 @praxfunction
+@praxmethod
 def f(input):
     """Reads contents of a file"""
     input = PraxBytes(input)
     return PraxBytes(open(input.raw, 'rb').read())
 
 
-@praxexport
+@praxfunction
 def stdin():
     """Reads from stdin"""
     return PraxBytes(sys.stdin.read())

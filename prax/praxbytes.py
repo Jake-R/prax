@@ -1,10 +1,8 @@
 from __future__ import absolute_import, division, print_function
-from builtins import (bytes, int, str)
+from builtins import *
 import types
 
-from prax.utility import isiterable, int_to_bytes, export, py_major_version, add_method
-
-funcs = []
+from prax.utility import isiterable, int_to_bytes, export, py_major_version
 
 
 class PraxException(BaseException):
@@ -39,6 +37,9 @@ class PraxBytes(object):
             return self.bytes == PraxBytes(other).bytes
         except PraxException:
             return NotImplemented
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __getitem__(self, item):
         return PraxBytes(self.bytes.__getitem__(item))
@@ -146,21 +147,15 @@ def praxoutput(func):
     return func
 
 
-def praxfunction(func):
+def praxmethod(func):
     if py_major_version() < 3:
         setattr(PraxBytes, func.__name__, types.MethodType(func, None, PraxBytes))
     else:
         setattr(PraxBytes, func.__name__, func)
-    funcs.append(func)
-    praxexport(func)
+    praxfunction(func)
     return func
 
 
-def praxexport(func):
+def praxfunction(func):
     export(func)
     return func
-
-
-if __name__ == "__main__":
-    import IPython
-    IPython.embed()

@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='prax',
@@ -14,4 +14,7 @@ setup(
             'prax = prax.praxcmd:main'
         ]
     },
+    install_requires=['future', 'funcsigs'],
+    #setup_requires=['pytest-runner',],
+    #tests_require=['pytest', 'hypothesis',],
 )

@@ -1,4 +1,4 @@
-from .praxbytes import PraxBytes, PraxException, praxoutput, praxfunction, praxexport
+from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfunction
 
 from prax.core import *
 

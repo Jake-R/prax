@@ -4,11 +4,13 @@ from builtins import *
 import os
 import sys
 import argparse
-from inspect import signature, _empty
+from funcsigs import signature, _empty
 
 from prax import *
 # for print_funcs #
 from prax import core
+
+
 # end print_funcs #
 
 
@@ -21,7 +23,10 @@ def print_funcs(module):
             sig = signature(attr)
             params = ", ".join([x.name if x.default is _empty else "{}={}".format(x.name, x.default)
                                 for x in sig.parameters.values()])
-        description = attr.__doc__.split("\n")[0].strip()
+        if attr.__doc__ is not None:
+            description = attr.__doc__.split("\n")[0].strip()
+        else:
+            description = ""
         vals.append(("{name}({params})".format(name=name, params=params), description))
     ret = ""
     for val in vals:
@@ -35,11 +40,12 @@ Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
     f("README.md")[:6] = "# Prax"
     
-"""
+""" + \
+              print_funcs(core)
 
 
 def main():
-    parser = argparse.ArgumentParser(description=description+print_funcs(core),
+    parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")
     parser.add_argument("input")
@@ -48,6 +54,7 @@ def main():
     os.write(sys.stdout.fileno(), eval(args.input).bytes)
     print("", end=end)
     sys.stdout.flush()
+
 
 if __name__ == "__main__":
     main()
