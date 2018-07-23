@@ -5,6 +5,7 @@
 Prax `eval()`s your input so do not include any unstructed data on the command line (i.e. no command substitution). Instead use Prax functions like `stdin()` or `f()` to work with untrusted data.
 
 # Usage
+~~~~
 >> prax -h
 usage: prax [-h] [-n] input
 
@@ -28,6 +29,7 @@ positional arguments:
 optional arguments:
   -h, --help        show this help message and exit
   -n, --no_newline  Don't add a newline to output.
+~~~~
 
 # Examples
 ~~~~
@@ -45,7 +47,7 @@ e1\*e2 |repeat e1 e2 times | `>>prax 'p(0x41)*6' -> AAAAAA`
 e1\**e2 | repeat e1 e2 times, incrementing by 1 | `>>prax 'p(0x30)**10 -> 0123456789`
 e1 <</>> e2 | shift e1 by e2 | `>>prax 'p(0x1).H() + p("  ") + (p(0x1) << 2).H()' -> 01  04`
 e1 ==/!= e2 | test for equality | 
-e1 &/^/| e2 | bitwise and/xor/or e1 with e2 | 
+e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 | 
 
 # Install
 ~~~~
