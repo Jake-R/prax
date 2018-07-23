@@ -144,7 +144,7 @@ class PraxBytes(object):
     def __pow__(self, other):
         return self._realmatmul(self, other)
 
-    def __pow__(self, other):
+    def __rpow__(self, other):
         return self._realmatmul(other, self)
 
 

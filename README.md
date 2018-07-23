@@ -1,8 +1,29 @@
 # Prax
 [Prax](http://expanse.wikia.com/wiki/Praxidike_Meng) is a data conversion and buffer creation utility inspired by radare2's rax. It allows the user to enter data and manipulate it with a fast and simple Python-based syntax. In fact, it actually is Python! Prax commands can include python features like variables or list comprehensions and any command can be used in a Python script by including `from prax import *`.
 
-## Warning
-Prax `eval()`s your input so do not include any unstructed data on the command line (i.e. no command substitution). Instead use Prax functions like `stdin()` or `f()` to work with untrusted data.
+## Warning!!
+Prax `eval()`s your input so do not include any untrusted data on the command line (i.e. no command substitution). Instead use Prax functions like `stdin()` or `f()` to work with untrusted data.
+
+# Examples
+~~~~
+>> prax '"A"*10 + h("deadbeef").e().H()'
+AAAAAAAAAAefbeadde
+>> prax 'f("README.md")[2:6]'
+Prax
+# Simple Buffer overflow example
+>> prax '"A"*32 + p(0x0804849d).e(4) | ./vuln
+~~~~
+Python operators are implemented as follows:
+
+Operator | Explanation | Example
+--- | --- | ---
+e1+e2 | concatenate e1 with e2 | `>> prax 'p("ABCD")+p(0x45464748)' -> ABCDEFGH`
+e1\*e2 |repeat e1 e2 times | `>>prax 'p(0x41)*6' -> AAAAAA`
+e1\**e2 | repeat e1 e2 times, incrementing by 1 | `>>prax 'p(0x30)**10 -> 0123456789`
+e1 <</>> e2 | shift e1 by e2 | `>>prax 'p(0x1).H() + p("  ") + (p(0x1) << 2).H()' -> 01  04`
+e1 ==/!= e2 | test for equality | 
+e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 | 
+
 
 # Usage
 ~~~~
@@ -30,24 +51,6 @@ optional arguments:
   -h, --help        show this help message and exit
   -n, --no_newline  Don't add a newline to output.
 ~~~~
-
-# Examples
-~~~~
->> prax '"A"*10 + h("deadbeef").e().H()'
-AAAAAAAAAAefbeadde
->> prax 'f("README.md")[2:6]'
-Prax
-~~~~
-Python operators are implemented as follows:
-
-Operator | Explanation | Example
---- | --- | ---
-e1+e2 | concatenate e1 with e2 | `>> prax 'p("ABCD")+p(0x45464748)' -> ABCDEFGH`
-e1\*e2 |repeat e1 e2 times | `>>prax 'p(0x41)*6' -> AAAAAA`
-e1\**e2 | repeat e1 e2 times, incrementing by 1 | `>>prax 'p(0x30)**10 -> 0123456789`
-e1 <</>> e2 | shift e1 by e2 | `>>prax 'p(0x1).H() + p("  ") + (p(0x1) << 2).H()' -> 01  04`
-e1 ==/!= e2 | test for equality | 
-e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 | 
 
 # Install
 ~~~~
