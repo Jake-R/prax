@@ -1,5 +1,5 @@
 # Prax
-[Prax](http://www.imdb.com/character/ch0566106/) is a data conversion and buffer creation utility inspired by radare2's rax. It allows the user to enter data and manipulate it with a fast and simple Python-based syntax. In fact, it actually is Python! Prax commands can include python features like variables or list comprehensions and any command can be used in a Python script by including `from prax import *`.
+[Prax](http://expanse.wikia.com/wiki/Praxidike_Meng) is a data conversion and buffer creation utility inspired by radare2's rax. It allows the user to enter data and manipulate it with a fast and simple Python-based syntax. In fact, it actually is Python! Prax commands can include python features like variables or list comprehensions and any command can be used in a Python script by including `from prax import *`.
 
 ## Warning
 Prax `eval()`s your input so do not include any unstructed data on the command line (i.e. no command substitution). Instead use Prax functions like `stdin()` or `f()` to work with untrusted data.
