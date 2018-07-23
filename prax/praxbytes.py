@@ -129,8 +129,8 @@ class PraxBytes(object):
     def _realmatmul(left, right):
         try:
             res = PraxBytes()
-            for i in range(PraxBytes(right).num):
-                res += PraxBytes(PraxBytes(left).num + i)
+            for i in range(PraxBytes(left).num):
+                res += PraxBytes(PraxBytes(right).num + i)
             return res
         except PraxException:
             return NotImplemented
@@ -139,6 +139,12 @@ class PraxBytes(object):
         return self._realmatmul(self, other)
 
     def __rmatmul__(self, other):
+        return self._realmatmul(other, self)
+
+    def __pow__(self, other):
+        return self._realmatmul(self, other)
+
+    def __pow__(self, other):
         return self._realmatmul(other, self)
 
 

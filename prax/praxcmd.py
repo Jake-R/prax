@@ -43,15 +43,18 @@ Chain conversions and manipulate data using normal operators:
               print_funcs(core)
 
 
-def main(args):
+def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")
     parser.add_argument("input")
     args = parser.parse_args(args)
     end = "" if args.no_newline else "\n"
-    if input:
-        os.write(sys.stdout.fileno(), p(eval(args.input)).bytes)
+    if args.input:
+        try:
+            os.write(sys.stdout.fileno(), p(eval(args.input)).bytes)
+        except SyntaxError as e:
+            print("Invalid input: {}\n{}".format(args.input, e.msg))
     print("", end=end)
     sys.stdout.flush()
     return 0
