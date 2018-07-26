@@ -40,6 +40,11 @@ def test_lshift(x, y):
 def test_rshift(x, y):
     perms(x, y, lambda x, y: x >> y)
 
+@given(st.integers().filter(lambda x: 0 <= x), st.integers().filter(lambda x: 0 <= x <= 100))
+@settings(suppress_health_check=[HealthCheck.filter_too_much])
+def test_increment(x, y):
+    # TODO: implement
+    assert True
 
 @given(st.integers().filter(lambda x: 0 <= x), st.integers().filter(lambda x: 0 <= x))
 def test_and(x, y):

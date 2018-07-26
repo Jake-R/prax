@@ -47,12 +47,18 @@ def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")
+    parser.add_argument("-d", "--debug", action='store_true', help="launch idpb when running command")
     parser.add_argument("input")
     args = parser.parse_args(args)
     end = "" if args.no_newline else "\n"
     if args.input:
         try:
-            os.write(sys.stdout.fileno(), p(eval(args.input)).bytes)
+            if args.debug:
+                import ipdb
+                res = p(ipdb.runeval(args.input)).bytes
+            else:
+                res = p(eval(args.input)).bytes
+            os.write(sys.stdout.fileno(), res)
         except SyntaxError as e:
             print("Invalid input: {}\n{}".format(args.input, e.msg))
     print("", end=end)
