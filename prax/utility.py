@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 from builtins import *
 
 import sys
+import types
 from functools import wraps
 
 
@@ -48,3 +49,11 @@ def pad_even(input_, padding='0'):
 
 def py_major_version():
     return sys.version_info[0]
+
+
+def add_func_to_class(func, cls):
+    if py_major_version() < 3:
+        setattr(cls, func.__name__, types.MethodType(func, None, cls))
+    else:
+        setattr(cls, func.__name__, func)
+    return func

@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 from builtins import *
 import types
 
-from prax.utility import isiterable, int_to_bytes, export, py_major_version
+from prax.utility import isiterable, int_to_bytes, export, py_major_version, add_func_to_class
 
 
 class PraxException(BaseException):
@@ -154,14 +154,15 @@ def praxoutput(func):
 
 
 def praxmethod(func):
-    if py_major_version() < 3:
-        setattr(PraxBytes, func.__name__, types.MethodType(func, None, PraxBytes))
-    else:
-        setattr(PraxBytes, func.__name__, func)
-    praxfunction(func)
-    return func
+    return add_func_to_class(func, PraxBytes)
 
 
 def praxfunction(func):
     export(func)
     return func
+
+
+def praxmodule(parent, child):
+    parent.__all__.append(child)
+
+
