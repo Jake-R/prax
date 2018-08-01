@@ -1,8 +1,10 @@
 from __future__ import absolute_import, division, print_function
 from builtins import *
 
+import sys
 from prax import *
 from pwnlib import shellcraft as shl
+from pwnlib.util.packing import pack, unpack
 import pwnlib
 import decorator
 
@@ -42,6 +44,18 @@ def disasm(pb, arch=None):
     pb = p(pb)
     return p(pwnlib.asm.disasm(pb.bytes, arch=arch, byte=False, offset=False))
 
+
+def _i(f, *args, **kwargs):
+    return p(f(p(args[0]).num, *args[1:], **kwargs))
+
+
+def iwrap(f, name):
+    f.__module__ = __name__
+    f.__name__ = name
+    return decorator.decorate(f, _i)
+
+i = praxfunction(praxmethod(iwrap(pack, 'i')))
+ui = praxfunction(praxmethod(iwrap(unpack, 'ui')))
 
 praxmodule(sys.modules[__name__], "shl")
 
