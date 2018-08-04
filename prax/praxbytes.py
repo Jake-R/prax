@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 from builtins import *
+from collections import defaultdict
+from funcsigs import signature, _empty
 import types
 
 from prax.utility import isiterable, int_to_bytes, export, py_major_version, add_func_to_class
@@ -148,21 +150,69 @@ class PraxBytes(object):
         return self._realmatmul(other, self)
 
 
+class PraxModule(object):
+    def __init__(self):
+        self.outputs = []
+        self.methods = []
+        self.functions = []
+        self.modules = []
+
+    def __str__(self):
+        return self._str_list(self.outputs, "outputs") + \
+               self._str_list(set(self.methods + self.functions), "methods/functions") + \
+               self._str_list(self.modules, "modules", func=self._str_module)
+
+    def _str_base(self, item):
+        params = ""
+        if item.__doc__ is not None:
+            description = item.__doc__.split("\n")[0].strip()
+        else:
+            description = ""
+        if callable(item):
+            sig = signature(item)
+            params = ", ".join([x.name if x.default is _empty else "{}={}".format(x.name, x.default)
+                                for x in sig.parameters.values()])
+            return ("{name}({params})".format(name=item.__name__, params=params), description)
+        else:
+            return item.__name__, description
+
+    def _str_module(self, item):
+        return item
+
+    def _str_list(self, list, name, func=None):
+        if not func:
+            func = self._str_base
+        if not list:
+            return ""
+        return "{}:\n".format(name) + "".join([("\t{:<25}:  {}\n".format(*func(x))) for x in list])
+
+
+praxmodules = defaultdict(PraxModule)
+
 def praxoutput(func):
+    praxmodules[func.__module__].outputs.append(func)
     setattr(PraxBytes, func.__name__, property(func))
     return func
 
 
 def praxmethod(func):
+    praxmodules[func.__module__].methods.append(func)
+
     return add_func_to_class(func, PraxBytes)
 
 
 def praxfunction(func):
+    praxmodules[func.__module__].functions.append(func)
+
     export(func)
     return func
 
 
-def praxmodule(parent, child):
+def praxmodule(parent, child, description=None):
     parent.__all__.append(child)
+    if not description:
+        description = getattr(parent, child).__doc__.split("\n")[0]
+    praxmodules[parent.__name__].modules.append((child, description))
+
 
 

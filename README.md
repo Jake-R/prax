@@ -53,8 +53,12 @@ optional arguments:
 ~~~~
 
 # Install
+Prax supports Python 2 and 3 but depends on pwntools which is a Python 2 project. Github user 'arthaud' maintains a Python 3 branch but it is two years out of date as of August 2018.  Things seem to work okay but the pwntools integration is not rigorously tested on Python3. Use at your own risk.
 ~~~~
 git clone https://github.com/Jake-R/prax.git
+# Python 2
 sudo -H pip install -e prax
+# Python3
+sudo -H pip3 install -e . --find-links git+https://github.com/arthaud/python3-pwntools.git#egg=pwntools-100.0.0 pwntools
 ~~~~
 

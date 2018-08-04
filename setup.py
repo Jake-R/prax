@@ -14,7 +14,7 @@ setup(
             'prax = prax.praxcmd:main'
         ]
     },
-    install_requires=['future', 'funcsigs', 'pwntools'],
+    install_requires=['future', 'funcsigs', 'pwntools'],#, 'pwntools==0.0.0;python_version>"2"'],
     #setup_requires=['pytest-runner',],
     #tests_require=['pytest', 'hypothesis',],
 )

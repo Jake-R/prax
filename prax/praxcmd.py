@@ -11,8 +11,8 @@ from prax import *
 
 # end print_funcs #
 
-
-def print_funcs(module):
+def print_funcs(name, module_holder):
+    module_name = name.split(".")[-1]
     vals = []
     for name in module.__all__:
         attr = getattr(module, name)
@@ -38,10 +38,8 @@ description = """A data conversion tool.
 Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g. p(0xdeadbeef)
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
-    f("README.md")[:6] = "# Prax" 
-""" + \
-              print_funcs(core) + \
-              print_funcs(shellcode)
+    f("README.md")[:6] = "# Prax"\n 
+""" + "\n".join(["{}\n{}".format(key.split(".")[-1], str(value)) for key, value in praxmodules.items()])
 
 
 def main(args=sys.argv[1:]):
@@ -58,7 +56,7 @@ def main(args=sys.argv[1:]):
         try:
             if args.debug:
                 import ipdb
-                res = p(ipdb.runeval(args.input)).bytes
+                res = p(ipdb.runeval(args.input, globals=globals(), locals=locals())).bytes
             else:
                 res = p(eval(args.input)).bytes
             os.write(sys.stdout.fileno(), res)
