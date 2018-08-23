@@ -73,10 +73,15 @@ def f(input):
     input = PraxBytes(input)
     return PraxBytes(open(input.raw, 'rb').read())
 
-
+gStdin = None
 @praxfunction
 def stdin():
     """Reads from stdin"""
-    return PraxBytes(sys.stdin.read())
+    global gStdin
+
+    if gStdin is None:
+        gStdin = PraxBytes(sys.stdin.read())
+    
+    return gStdin
 
 

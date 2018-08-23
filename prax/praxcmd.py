@@ -41,8 +41,8 @@ Chain conversions and manipulate data using normal operators:
     f("README.md")[:6] = "# Prax" 
 """ + \
               print_funcs(core) + \
-              print_funcs(shellcode)
-
+              print_funcs(shellcode) + \
+              print_funcs(urlmodule)
 
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description=description,
