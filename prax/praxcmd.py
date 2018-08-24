@@ -6,6 +6,8 @@ import sys
 import argparse
 from funcsigs import signature, _empty
 from prax import *
+
+from pwnlib.util.fiddling import hexdump
 # for print_funcs #
 
 
@@ -34,11 +36,13 @@ def print_funcs(module):
     return ret
 
 
-description = """A data conversion tool.
+description = """A buffer building and data manipulation tool.
 Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g. p(0xdeadbeef)
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
     f("README.md")[:6] = "# Prax" 
+    asm(shl.nop())*40 + asm(shl.sh()) + "A"*47 + i(0xffffce20) -> 
+        nopsled       +   shellcode   + filler + return addr overwrite
 """ + \
               print_funcs(core) + \
               print_funcs(shellcode) + \
@@ -50,6 +54,7 @@ def main(args=sys.argv[1:]):
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")
     parser.add_argument("-d", "--debug", action='store_true', help="launch idpb when running command")
     parser.add_argument("-a", "--arch", default='i386', help="set pwnlib architecture")
+    parser.add_argument("--hd", action='store_true', help="output as hexdump")
     parser.add_argument("input")
     args = parser.parse_args(args)
     set_arch(args.arch)
@@ -61,7 +66,10 @@ def main(args=sys.argv[1:]):
                 res = p(ipdb.runeval(args.input)).bytes
             else:
                 res = p(eval(args.input)).bytes
-            os.write(sys.stdout.fileno(), res)
+            if args.hd:
+                print(hexdump(res))
+            else:
+                os.write(sys.stdout.fileno(), res)
         except SyntaxError as e:
             print("Invalid input: {}\n{}".format(args.input, e.msg))
     print("", end=end)
