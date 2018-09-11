@@ -1,4 +1,4 @@
-from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfunction, praxmodule
+from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfunction, praxmodule, _praxfuncs
 
 from prax.modules.core import *
 from prax.modules.shellcode import *
@@ -18,7 +18,7 @@ if os.path.exists(MODULE_DIR):
                 fname = fname[:-3]
                 module = __import__(fname)
                 for attr in dir(module):
-                    if not attr.startswith('_'):
+                    if attr in _praxfuncs:
                         globals()[attr] = getattr(module, attr)
                 #with open(module) as f:
                 #    code = compile(f.read(), module, 'exec')

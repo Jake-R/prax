@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 from builtins import *
 import types
 
-from prax.utility import isiterable, int_to_bytes, export, py_major_version, add_func_to_class
+from prax.utils import isiterable, int_to_bytes, export, py_major_version, add_func_to_class
 
 from pwnlib.util.fiddling import hexdump
 
@@ -158,9 +158,11 @@ def praxoutput(func):
 def praxmethod(func):
     return add_func_to_class(func, PraxBytes)
 
+_praxfuncs = []
 
 def praxfunction(func):
     export(func)
+    _praxfuncs.append(func.__name__)
     return func
 
 

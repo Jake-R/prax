@@ -1,5 +1,5 @@
 from prax.praxbytes import PraxBytes, praxoutput, praxmethod, praxfunction
-from prax.utility import int_from_bytes, int_to_bytes, pad_even
+from prax.utils import int_from_bytes, int_to_bytes, pad_even
 import binascii
 import sys
 
