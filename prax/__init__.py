@@ -1,8 +1,8 @@
 from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfunction, praxmodule
 
-from prax.core import *
-from prax.shellcode import *
-from prax.urlmodule import *
+from prax.modules.core import *
+from prax.modules.shellcode import *
+from prax.modules.urlmodule import *
 
 import os
 import sys
