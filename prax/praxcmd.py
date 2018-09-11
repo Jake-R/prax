@@ -1,9 +1,8 @@
 from __future__ import absolute_import, division, print_function
-from builtins import *
 
 import os
-import sys
 import argparse
+import sys
 from funcsigs import signature, _empty
 from prax import *
 
@@ -44,9 +43,9 @@ Chain conversions and manipulate data using normal operators:
     asm(shl.nop())*40 + asm(shl.sh()) + "A"*47 + i(0xffffce20) -> 
         nopsled       +   shellcode   + filler + return addr overwrite
 """ + \
-              print_funcs(core) + \
-              print_funcs(shellcode) + \
-              print_funcs(urlmodule)
+              print_funcs(modules.core) + \
+              print_funcs(modules.shellcode) + \
+              print_funcs(modules.urlmodule)
 
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description=description,
