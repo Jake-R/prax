@@ -1,6 +1,6 @@
-from prax import praxcmd
-from contextlib import redirect_stdout
-import io
+from prax import praxcmd, p
+from hypothesis import given, example, strategies as st
+
 
 def get_stdout(capsys, func, args):
     retval = func(args)
@@ -24,4 +24,7 @@ def test_hexdump(capsys):
 
 """)
 
-
+@given(st.integers().filter(lambda x: x>0))
+def test_cmdraw(capfdbinary, int_):
+    retval, stdout = get_stdout(capfdbinary, praxcmd.main, [str(int_), '-n'])
+    assert (retval, p(stdout)) == (0, p(int_).bytes)
