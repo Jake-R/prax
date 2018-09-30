@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import argparse
 import sys
+import ast
 from funcsigs import signature, _empty
 from prax import *
 
@@ -12,6 +13,14 @@ from pwnlib.util.fiddling import hexdump
 
 # end print_funcs #
 
+# https://stackoverflow.com/questions/12698028/why-is-pythons-eval-rejecting-this-multiline-string-and-how-can-i-fix-it
+def multiline_eval(expr, context):
+    "Evaluate several lines of input, returning the result of the last line"
+    tree = ast.parse(expr)
+    eval_expr = ast.Expression(tree.body[-1].value)
+    exec_expr = ast.Module(tree.body[:-1])
+    exec(compile(exec_expr, 'file', 'exec'), context)
+    return eval(compile(eval_expr, 'file', 'eval'), context)
 
 def print_funcs(module):
     vals = []
@@ -62,13 +71,13 @@ def main(args=sys.argv[1:]):
         try:
             if args.debug:
                 import ipdb
-                res = p(ipdb.runeval(args.input)).bytes
+                res = p(ipdb.runeval(args.input, globals=globals(), locals=locals())).bytes
             else:
-                res = p(eval(args.input)).bytes
+                res = p(multiline_eval(args.input, globals())).bytes
             if args.hd:
                 print(hexdump(res))
             else:
-                os.write(sys.stdout.fileno(), res)
+                sys.stdout.buffer.write(res)
         except SyntaxError as e:
             print("Invalid input: {}\n{}".format(args.input, e.msg))
     print("", end=end)
