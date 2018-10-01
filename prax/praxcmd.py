@@ -6,7 +6,7 @@ import sys
 import ast
 from funcsigs import signature, _empty
 from prax import *
-
+from prax.utils import raw_print
 from pwnlib.util.fiddling import hexdump
 # for print_funcs #
 
@@ -77,9 +77,10 @@ def main(args=sys.argv[1:]):
             if args.hd:
                 print(hexdump(res))
             else:
-                sys.stdout.buffer.write(res)
+                raw_print(res)
         except SyntaxError as e:
             print("Invalid input: {}\n{}".format(args.input, e.msg))
+            return 1
     print("", end=end)
     sys.stdout.flush()
     return 0
