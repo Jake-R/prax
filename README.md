@@ -38,37 +38,44 @@ e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 |
 
 # Usage
 ~~~~
-usage: prax [-h] [-n] [-d] [-a ARCH] [--hd] input
+usage: praxcmd.py [-h] [-n] [-d] [-a ARCH] [--hd] input
 
 A buffer building and data manipulation tool.
 Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g. p(0xdeadbeef)
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
-    f("README.md")[:6] = "# Prax" 
-    asm(shl.nop())*40 + asm(shl.sh()) + "A"*47 + i(0xffffce20) -> 
-        nopsled       +   shellcode   + filler + return addr overwrite
+    f("README.md")[:6] = "# Prax"
 
-prax.core:
-	p(input=)                :  Convert to PraxBytes
-	h(input)                 :  Convert from hexadecimal representation
-	H(input)                 :  Convert to hexadecimal representation
-	b(input)                 :  Convert from binary representation
-	B(input)                 :  Convert to binary representation
-	e(input, num_bytes=4)    :  Swaps endianness. optional param 'num_bytes'
-	f(input)                 :  Reads contents of a file
-	stdin()                  :  Reads from stdin
+core
+outputs:
+        utf_8(praxbytes)         :  Decode as utf-8
+        raw(praxbytes)           :  Decode as latin-1 (raw)
+        num(praxbytes)           :  Decode as int (big-endian)
+        hd(praxbytes)            :  Hexdump
+methods/functions:
+        h(input)                 :  Convert from hexadecimal representation
+        B(input)                 :  Convert to binary representation
+        H(input)                 :  Convert to hexadecimal representation
+        e(input, num_bytes=4)    :  Swaps endianness. optional param 'num_bytes'
+        b(input)                 :  Convert from binary representation
+        f(input)                 :  Reads contents of a file
+        p(input=b'')             :  Convert to PraxBytes
+        stdin()                  :  Reads from stdin
 
-prax.shellcode:
-	set_arch(arch)           :  Set the pwnlib architecture (same as -a for cmd tool)
-	binsh(arch=None)         :  assembled binsh shellcode. equivalent to asm(shl.sh())
-	asm(pb, arch=None)       :  Assemble instructions or shellcode according to current arch
-	disasm(pb, arch=None)    :  Disassemble instructions or shellcode according to current arch
-	i(number, word_size=None, endianness=None, sign=None, kwargs):  Pack a word sized value according to the specified arch
-	ui(a, kw)                :  Unpack a word sized value according to the specified arch
-	shl                      :  The shellcode module.
+shellcode
+methods/functions:
+        binsh(arch=None)         :  assembled binsh shellcode. equivalent to asm(shl.sh())
+        asm(pb, arch=None)       :  Assemble instructions or shellcode according to current arch
+        disasm(pb, arch=None)    :  Disassemble instructions or shellcode according to current arch
+        i(number, word_size=None, endianness=None, sign=None, kwargs):  Pack a word sized value according to the specified arch
+        set_arch(arch)           :  Set the pwnlib architecture (same as -a for cmd tool)
+        ui(data, word_size=None) :  Unpack a word sized value according to the specified arch
+modules:
+        shl                      :  The shellcode module.
 
-prax.urlmodule:
-	urlenc(pb)               :  Produce a URL safe encoded string
+urlmodule
+methods/functions:
+        urlenc(pb)               :  Produce a URL safe encoded string
 
 positional arguments:
   input
@@ -79,6 +86,8 @@ optional arguments:
   -d, --debug           launch idpb when running command
   -a ARCH, --arch ARCH  set pwnlib architecture
   --hd                  output as hexdump
+
+
 ~~~~
 
 # Install
