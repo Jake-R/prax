@@ -28,7 +28,7 @@ Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
     f("README.md")[:6] = "# Prax"\n 
-""" + "\n".join(["{}\n{}".format(key.split(".")[-1], str(value)) for key, value in praxmodules.items()])
+""" + "\n".join(["\033[1m\033[4m{}:\033[0m\n{}".format(key.split(".")[-1], str(value)) for key, value in praxmodules.items()])
 
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description=description,
@@ -45,13 +45,13 @@ def main(args=sys.argv[1:]):
         try:
             if args.debug:
                 import ipdb
-                res = p(ipdb.runeval(args.input, globals=globals(), locals=locals())).bytes
+                res = p(ipdb.runeval(args.input, globals=globals(), locals=locals()))
             else:
-                res = p(multiline_eval(args.input, globals())).bytes
+                res = p(multiline_eval(args.input, globals()))
             if args.hd:
-                print(hexdump(res))
+                print(res.hd)
             else:
-                raw_print(res)
+                raw_print(res.bytes)
         except SyntaxError as e:
             print("Invalid input: {}\n{}".format(args.input, e.msg))
             return 1
