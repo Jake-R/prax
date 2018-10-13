@@ -4,8 +4,9 @@ from collections import defaultdict
 from funcsigs import signature, _empty
 import types
 
-from prax.utility import isiterable, int_to_bytes, export, py_major_version, add_func_to_class
+from prax.utils import isiterable, int_to_bytes, export, py_major_version, add_func_to_class
 
+from pwnlib.util.fiddling import hexdump
 
 class PraxException(BaseException):
     pass
@@ -29,10 +30,11 @@ class PraxBytes(object):
         return self.bytes
 
     def __repr__(self):
-        raw = self.H().raw
-        if len(raw) > 50:
-            raw = "{}...".format(raw[:50])
-        return "<PraxBytes: 0x{}>".format(raw)
+        #raw = self.H().raw
+        #if len(raw) > 50:
+        #    raw = "{}...".format(raw[:50])
+        #return "<PraxBytes: 0x{}>".format(raw)
+        return hexdump(self.bytes)
 
     def __eq__(self, other):
         try:
@@ -200,11 +202,13 @@ def praxmethod(func):
 
     return add_func_to_class(func, PraxBytes)
 
+_praxfuncs = []
 
 def praxfunction(func):
     praxmodules[func.__module__].functions.append(func)
 
     export(func)
+    _praxfuncs.append(func.__name__)
     return func
 
 

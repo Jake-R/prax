@@ -49,13 +49,15 @@ def _i(f, *args, **kwargs):
     return p(f(p(args[0]).num, *args[1:], **kwargs))
 
 
-def iwrap(f, name):
+def iwrap(f, name, doc=None):
     f.__module__ = __name__
     f.__name__ = name
+    if doc:
+        f.__doc__ = doc
     return decorator.decorate(f, _i)
 
-i = praxfunction(praxmethod(iwrap(pack, 'i')))
-ui = praxfunction(praxmethod(iwrap(unpack, 'ui')))
+i = praxfunction(praxmethod(iwrap(pack, 'i', 'Pack a word sized value according to the specified arch')))
+ui = praxfunction(praxmethod(iwrap(unpack, 'ui', 'Unpack a word sized value according to the specified arch')))
 
 praxmodule(sys.modules[__name__], "shl")
 
