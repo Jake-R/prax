@@ -1,4 +1,4 @@
-from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfunction, praxmodule, _praxfuncs
+from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfunction, praxmodule, praxmodules, _praxfuncs
 
 from prax.modules.core import *
 from prax.modules.shellcode import *
