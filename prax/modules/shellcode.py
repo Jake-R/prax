@@ -56,8 +56,8 @@ def iwrap(f, name, doc=None):
         f.__doc__ = doc
     return decorator.decorate(f, _i)
 
-i = praxfunction(praxmethod(iwrap(pack, 'i', 'Pack a word sized value according to the specified arch')))
-ui = praxfunction(praxmethod(iwrap(unpack, 'ui', 'Unpack a word sized value according to the specified arch')))
+pack = praxfunction(praxmethod(iwrap(pack, 'pack', 'Pack a word sized value according to the specified arch')))
+unpack = praxfunction(praxmethod(iwrap(unpack, 'unpack', 'Unpack a word sized value according to the specified arch')))
 
 praxmodule(sys.modules[__name__], "shl")
 

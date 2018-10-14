@@ -24,17 +24,6 @@ Prax
 00000080  41 41 41 20  ce ff ff                               │AAA │···│
 00000087
 ~~~~
-Python operators are implemented as follows:
-
-Operator | Explanation | Example
---- | --- | ---
-e1+e2 | concatenate e1 with e2 | `>> prax 'p("ABCD")+p(0x45464748)' -> ABCDEFGH`
-e1\*e2 |repeat e1 e2 times | `>>prax 'p(0x41)*6' -> AAAAAA`
-e1\**e2 | repeat e1 e2 times, incrementing by 1 | `>>prax 'p(0x30)**10 -> 0123456789`
-e1 <</>> e2 | shift e1 by e2 | `>>prax 'p(0x1).H() + p("  ") + (p(0x1) << 2).H()' -> 01  04`
-e1 ==/!= e2 | test for equality | 
-e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 | 
-
 
 # Usage
 ~~~~
@@ -81,6 +70,18 @@ optional arguments:
   --hd                  output as hexdump
 ~~~~
 
+Python operators are implemented as follows:
+
+Operator | Explanation | Example
+--- | --- | ---
+e1+e2 | concatenate e1 with e2 | `>> prax 'p("ABCD")+p(0x45464748)' -> ABCDEFGH`
+e1\*e2 |repeat e1 e2 times | `>>prax 'p(0x41)*6' -> AAAAAA`
+e1\**e2 | repeat e1 e2 times, incrementing by 1 | `>>prax 'p(0x30)**10 -> 0123456789`
+e1 <</>> e2 | shift e1 by e2 | `>>prax 'p(0x1).H() + p("  ") + (p(0x1) << 2).H()' -> 01  04`
+e1 ==/!= e2 | test for equality | 
+e1 &/^/\| e2 | bitwise and/xor/or e1 with e2 | 
+
+
 # Install
 Prax supports Python 2 and 3 but depends on pwntools which is a Python 2 project. Github user 'arthaud' maintains a Python 3 branch but it is two years out of date as of August 2018.  Things seem to work okay but the pwntools integration is not rigorously tested on Python3. Use at your own risk.
 ~~~~
@@ -90,4 +91,53 @@ sudo -H pip install -e prax
 # Python3
 sudo -H pip3 install -e . --find-links git+https://github.com/arthaud/python3-pwntools.git#egg=pwntools-100.0.0 pwntools
 ~~~~
+
+
+# Custom functions
+Users can extend Prax through the use of the ~/.prax/modules directory. Any Python file in this directory will be loaded as a Prax module. Prax offers a couple of decorators to make it easy to add functions, methods, outputs, and modules to Prax.
+
+## @praxfunction
+Prax functions are functions that take 0 or more arguments and return a PraxBytes object. Praxfunctions should always call p() on their inputs to convert them to PraxBytes in the case that the user passed a Python primitive rather than the result of a previous Prax operation. If the input is a PraxBytes object then p() will return the object unchanged.
+```python
+from prax import *
+@praxfunction
+def asdf():
+    """returns 'asdf'"""
+    return p("asdf")
+```
+
+## @praxmethod
+Prax methods are functions that take one or more arguments and return a PraxBytes object. Prax methods are patched into the PraxBytes class so that operations can be chained. Most Prax methods should also be Prax functions and decorated as such.
+```python
+from prax import *
+@praxfunction
+@praxmethod
+def reverse(input_):
+    """reverses the input"""
+    return p(input_)[::-1]
+
+p("asdf").reverse()
+# or
+reverse("asdf")
+```
+
+## @praxoutput
+Prax outputs are attribute functions that convert from a PraxBytes object to a native python object.
+```python
+from prax import *
+@praxoutput
+def utf_8(praxbytes):
+     """Decode as utf-8"""
+     return praxbytes.bytes.decode('utf-8')"
+p("asdf").utf_8
+```
+
+## praxmodule
+Prax modules are cases where you want to pass an entire module into the prax context, optionally under a different name. This is used for the shellcraft module of pwntools.
+```python
+from prax import *
+from pwntools import shellcraft as shl
+# pass in current module and name of imported module as string
+praxmodule(sys.modules[__name__], "shl")
+```
 
