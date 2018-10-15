@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 from builtins import *
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from funcsigs import signature, _empty
 import types
 
@@ -191,6 +191,7 @@ class PraxModule(object):
 
 praxmodules = defaultdict(PraxModule)
 
+
 def praxoutput(func):
     praxmodules[func.__module__].outputs.append(func)
     setattr(PraxBytes, func.__name__, property(func))
@@ -201,6 +202,7 @@ def praxmethod(func):
     praxmodules[func.__module__].methods.append(func)
 
     return add_func_to_class(func, PraxBytes)
+
 
 _praxfuncs = []
 
@@ -217,6 +219,16 @@ def praxmodule(parent, child, description=None):
     if not description:
         description = getattr(parent, child).__doc__.split("\n")[0]
     praxmodules[parent.__name__].modules.append((child, description))
+
+
+def praxhelp(filter_list=None):
+    mods = OrderedDict(sorted(praxmodules.items()))
+    lst = []
+    for key, value in mods.items():
+        if filter_list is not None and key not in filter_list:
+            continue
+        lst.append("\033[1m\033[4m{}:\033[0m\n{}\n".format(key.split(".")[-1], str(value)))
+    return "".join(lst)
 
 
 

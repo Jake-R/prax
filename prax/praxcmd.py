@@ -8,14 +8,12 @@ from funcsigs import signature, _empty
 from prax import *
 from prax.utils import raw_print
 from pwnlib.util.fiddling import hexdump
-# for print_funcs #
+from collections import OrderedDict
 
-
-# end print_funcs #
 
 # https://stackoverflow.com/questions/12698028/why-is-pythons-eval-rejecting-this-multiline-string-and-how-can-i-fix-it
 def multiline_eval(expr, context):
-    "Evaluate several lines of input, returning the result of the last line"
+    """Evaluate several lines of input, returning the result of the last line"""
     tree = ast.parse(expr)
     eval_expr = ast.Expression(tree.body[-1].value)
     exec_expr = ast.Module(tree.body[:-1])
@@ -28,7 +26,9 @@ Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
     f("README.md")[:6] = "# Prax"\n 
-""" + "\n".join(["\033[1m\033[4m{}:\033[0m\n{}".format(key.split(".")[-1], str(value)) for key, value in praxmodules.items()])
+""" + praxhelp(['prax.modules.core', 'prax.modules.shellcode']) + \
+    "\nTo view the full list of Prax modules run \"prax 'praxhelp()'\""
+
 
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description=description,

@@ -27,44 +27,42 @@ Prax
 
 # Usage
 ~~~~
-usage: praxcmd.py [-h] [-n] [-d] [-a ARCH] [--hd] input
+usage: prax [-h] [-n] [-d] [-a ARCH] [--hd] input
 
 A buffer building and data manipulation tool.
 Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g. p(0xdeadbeef)
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
     f("README.md")[:6] = "# Prax"
-
-core
+ 
+core:
 outputs:
-        utf_8(praxbytes)         :  Decode as utf-8
-        raw(praxbytes)           :  Decode as latin-1 (raw)
-        num(praxbytes)           :  Decode as int (big-endian)
-        hd(praxbytes)            :  Hexdump
+	utf_8(praxbytes)         :  Decode as utf-8
+	raw(praxbytes)           :  Decode as latin-1 (raw)
+	num(praxbytes)           :  Decode as int (big-endian)
+	hd(praxbytes)            :  Hexdump
 methods/functions:
-        h(input)                 :  Convert from hexadecimal representation
-        B(input)                 :  Convert to binary representation
-        H(input)                 :  Convert to hexadecimal representation
-        e(input, num_bytes=4)    :  Swaps endianness. optional param 'num_bytes'
-        b(input)                 :  Convert from binary representation
-        f(input)                 :  Reads contents of a file
-        p(input=b'')             :  Convert to PraxBytes
-        stdin()                  :  Reads from stdin
+	stdin()                  :  Reads from stdin
+	b(input)                 :  Convert from binary representation
+	B(input)                 :  Convert to binary representation
+	p(input=)                :  Convert to PraxBytes
+	e(input, num_bytes=4)    :  Swaps endianness. optional param 'num_bytes'
+	h(input)                 :  Convert from hexadecimal representation
+	f(input)                 :  Reads contents of a file
+	H(input)                 :  Convert to hexadecimal representation
 
-shellcode
+shellcode:
 methods/functions:
-        binsh(arch=None)         :  assembled binsh shellcode. equivalent to asm(shl.sh())
-        asm(pb, arch=None)       :  Assemble instructions or shellcode according to current arch
-        disasm(pb, arch=None)    :  Disassemble instructions or shellcode according to current arch
-        i(number, word_size=None, endianness=None, sign=None, kwargs):  Pack a word sized value according to the specified arch
-        set_arch(arch)           :  Set the pwnlib architecture (same as -a for cmd tool)
-        ui(data, word_size=None) :  Unpack a word sized value according to the specified arch
+	binsh(arch=None)         :  assembled binsh shellcode. equivalent to asm(shl.sh())
+	asm(pb, arch=None)       :  Assemble instructions or shellcode according to current arch
+	pack(number, word_size=None, endianness=None, sign=None, kwargs):  Pack a word sized value according to the specified arch
+	disasm(pb, arch=None)    :  Disassemble instructions or shellcode according to current arch
+	unpack(a, kw)            :  Unpack a word sized value according to the specified arch
+	set_arch(arch)           :  Set the pwnlib architecture (same as -a for cmd tool)
 modules:
-        shl                      :  The shellcode module.
+	shl                      :  The shellcode module.
 
-urlmodule
-methods/functions:
-        urlenc(pb)               :  Produce a URL safe encoded string
+To view the full list of Prax modules run "prax 'praxhelp()'"
 
 positional arguments:
   input
@@ -75,8 +73,6 @@ optional arguments:
   -d, --debug           launch idpb when running command
   -a ARCH, --arch ARCH  set pwnlib architecture
   --hd                  output as hexdump
-
-
 ~~~~
 
 Python operators are implemented as follows:
@@ -102,10 +98,10 @@ sudo -H pip3 install -e . --find-links git+https://github.com/arthaud/python3-pw
 ~~~~
 
 
-# Custom functions
+## Custom functions
 Users can extend Prax through the use of the ~/.prax/modules directory. Any Python file in this directory will be loaded as a Prax module. Prax offers a couple of decorators to make it easy to add functions, methods, outputs, and modules to Prax.
 
-## @praxfunction
+### @praxfunction
 Prax functions are functions that take 0 or more arguments and return a PraxBytes object. Praxfunctions should always call p() on their inputs to convert them to PraxBytes in the case that the user passed a Python primitive rather than the result of a previous Prax operation. If the input is a PraxBytes object then p() will return the object unchanged.
 ```python
 from prax import *
@@ -115,7 +111,7 @@ def asdf():
     return p("asdf")
 ```
 
-## @praxmethod
+### @praxmethod
 Prax methods are functions that take one or more arguments and return a PraxBytes object. Prax methods are patched into the PraxBytes class so that operations can be chained. Most Prax methods should also be Prax functions and decorated as such.
 ```python
 from prax import *
@@ -130,7 +126,7 @@ p("asdf").reverse()
 reverse("asdf")
 ```
 
-## @praxoutput
+### @praxoutput
 Prax outputs are attribute functions that convert from a PraxBytes object to a native python object.
 ```python
 from prax import *
@@ -141,7 +137,7 @@ def utf_8(praxbytes):
 p("asdf").utf_8
 ```
 
-## praxmodule
+### praxmodule
 Prax modules are cases where you want to pass an entire module into the prax context, optionally under a different name. This is used for the shellcraft module of pwntools.
 ```python
 from prax import *
@@ -149,4 +145,3 @@ from pwntools import shellcraft as shl
 # pass in current module and name of imported module as string
 praxmodule(sys.modules[__name__], "shl")
 ```
-
