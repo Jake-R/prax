@@ -4,6 +4,7 @@ from .praxbytes import PraxBytes, PraxException, praxoutput, praxmethod, praxfun
 from prax.modules.core import *
 from prax.modules.shellcode import *
 from prax.modules.urlmodule import *
+from prax.modules.hashing import *
 
 import os
 import sys
