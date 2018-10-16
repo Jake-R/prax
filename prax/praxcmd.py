@@ -26,7 +26,7 @@ Manipulate data by converting python builtins (str, int, bytes) to PraxBytes e.g
 Chain conversions and manipulate data using normal operators:
     "A"*10 + h("deadbeef").e().H() -> "AAAAAAAAAAefbeadde"
     f("README.md")[:6] = "# Prax"\n 
-""" + praxhelp(['prax.modules.core', 'prax.modules.shellcode']) + \
+""" + praxhelp(['core', 'shellcode'], _ret=True) + \
     "\nTo view the full list of Prax modules run \"prax 'praxhelp()'\""
 
 

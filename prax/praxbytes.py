@@ -221,14 +221,19 @@ def praxmodule(parent, child, description=None):
     praxmodules[parent.__name__].modules.append((child, description))
 
 
-def praxhelp(filter_list=None):
+def praxhelp(filter_list=None, _ret=False):
     mods = OrderedDict(sorted(praxmodules.items()))
     lst = []
     for key, value in mods.items():
-        if filter_list is not None and key not in filter_list:
+        if filter_list is not None and key.split(".")[-1] not in filter_list:
             continue
         lst.append("\033[1m\033[4m{}:\033[0m\n{}\n".format(key.split(".")[-1], str(value)))
-    return "".join(lst)
+    retval = "".join(lst)
+    if _ret:
+        return retval
+    else:
+        print(retval)
+        return ""
 
 
 
