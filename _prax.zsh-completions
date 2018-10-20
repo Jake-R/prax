@@ -1,0 +1,2 @@
+#compdef prax
+_alternative "arg:arg:($(prax complete\(\'$words[CURRENT]\'\)))"

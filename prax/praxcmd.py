@@ -7,6 +7,7 @@ import ast
 from funcsigs import signature, _empty
 from prax import *
 from prax.utils import raw_print
+from pyparsing import quotedString
 from pwnlib.util.fiddling import hexdump
 from collections import OrderedDict
 
@@ -30,7 +31,32 @@ Chain conversions and manipulate data using normal operators:
     "\nTo view the full list of Prax modules run \"prax 'praxhelp()'\""
 
 
+def complete(string_):
+    import IPython
+    completer = IPython.core.completer.Completer(locals(), globals())
+    completer.limit_to__all__ = True
+    completions = set()
+    esc = quotedString.suppress().transformString(string_)
+    for quote in ["'", '"']:
+        if quote in esc:
+            # probably didn't close bash escape quotes
+            # try removing first char and see if it goes away lol
+            string_ = string_[1:]
+            print("trying '{}' instead".format(string_), file=sys.stderr)
+            break
+    for val in xrange(999):
+        comp = completer.complete(string_, val)
+        if comp is None:
+            break
+        if comp[len(string_):].startswith("_"):
+            continue
+        completions.add(comp)
+    return " ".join(completions)
+
+
+
 def main(args=sys.argv[1:]):
+    print(args, file=sys.stderr)
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")
