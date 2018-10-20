@@ -42,7 +42,6 @@ def complete(string_):
             # probably didn't close bash escape quotes
             # try removing first char and see if it goes away lol
             string_ = string_[1:]
-            print("trying '{}' instead".format(string_), file=sys.stderr)
             break
     for val in xrange(999):
         comp = completer.complete(string_, val)
@@ -56,7 +55,6 @@ def complete(string_):
 
 
 def main(args=sys.argv[1:]):
-    print(args, file=sys.stderr)
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-n", "--no_newline", action='store_true', help="Don't add a newline to output.")

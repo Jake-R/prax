@@ -160,17 +160,17 @@ class PraxModule(object):
         self.modules = []
 
     def __str__(self):
-        return self._str_list(self.outputs, "outputs") + \
+        return self._str_list(self.outputs, "outputs", func=self._str_output) + \
                self._str_list(set(self.methods + self.functions), "methods/functions") + \
                self._str_list(self.modules, "modules", func=self._str_module)
 
-    def _str_base(self, item):
+    def _str_base(self, item, display_params=True):
         params = ""
         if item.__doc__ is not None:
             description = item.__doc__.split("\n")[0].strip()
         else:
             description = ""
-        if callable(item):
+        if callable(item) and display_params:
             sig = signature(item)
             params = ", ".join([x.name if x.default is _empty else "{}={}".format(x.name, x.default)
                                 for x in sig.parameters.values()])
@@ -180,6 +180,9 @@ class PraxModule(object):
 
     def _str_module(self, item):
         return item
+
+    def _str_output(self, item):
+        return self._str_base(item, display_params=False)
 
     def _str_list(self, list, name, func=None):
         if not func:
